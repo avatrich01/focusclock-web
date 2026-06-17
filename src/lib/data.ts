@@ -211,11 +211,8 @@ export async function setBlockStatus(id: number, status: BlockStatus): Promise<v
 }
 
 export async function setBlockNote(id: number, note: string): Promise<void> {
+  // Adding a task never auto-completes — completion is always an explicit action.
   await supabase.from('hourly_blocks').update({ note }).eq('id', id)
-  const { data } = await supabase.from('hourly_blocks').select('*').eq('id', id).maybeSingle()
-  if (data && note.trim() && data.status === 'worked') {
-    await setBlockStatus(id, 'completed')
-  }
 }
 
 // ─────────────────────────────── sessions ───────────────────────────────────
@@ -415,8 +412,10 @@ async function progressBlocks(day: string, settings: Settings): Promise<void> {
   const nowM = minutesOfDay()
   const blocks = await getBlocksForDay(day)
   for (const b of blocks) {
+    // Once an hour passes it's logged as "worked" (effort). It only counts as
+    // *done* when the user explicitly marks it — no auto-claiming.
     if (b.kind === 'work' && b.status === 'pending' && b.startMinutes + 60 <= nowM) {
-      await setBlockStatus(b.id, b.note.trim() ? 'completed' : 'worked')
+      await setBlockStatus(b.id, 'worked')
     }
   }
 }
@@ -800,13 +799,12 @@ export async function updateLeaderboardEntry(): Promise<void> {
   const monday = startOfWeek(dayKey())
   const fromMs = new Date(`${monday}T00:00:00`).getTime()
   const tasksDone = (await completedTodosBetween(fromMs, Date.now())).length
-  const focusMs = weekly.totalWorkedMs
   const streak = weekly.streak.current
-  // Hours where you actually completed a task (utilised, breaks excluded) are
-  // weighted highest — clock time alone counts little.
+  // "Worked hours" on the board = hours you completed a task in (task-hours).
+  // Raw clock time earns nothing.
   const taskHours = weekly.days.reduce((sum, d) => sum + d.blocksCompleted, 0)
-  const points =
-    taskHours * 20 + tasksDone * 5 + Math.round(focusMs / 3_600_000) * 5 + streak * 15
+  const focusMs = taskHours * 3_600_000
+  const points = taskHours * 20 + tasksDone * 5 + streak * 15
   await supabase.from('leaderboard').upsert(
     {
       user_id: requireUid(),

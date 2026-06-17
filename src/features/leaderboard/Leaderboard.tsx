@@ -128,8 +128,8 @@ export function Leaderboard(): JSX.Element {
             </div>
           </div>
           <p className="text-xs text-content-subtle mt-3">
-            Points = task-hours ×20 + tasks ×5 + worked hours ×5 + streak ×15. Hours where you
-            actually completed a task count most. Resets weekly.
+            Points = task-hours ×20 + brain-dump tasks ×5 + streak ×15. “Hours” here means hours
+            you actually completed a task in — clock time alone earns nothing. Resets weekly.
           </p>
         </Card>
 

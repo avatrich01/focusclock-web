@@ -212,3 +212,8 @@ export const RefreshIcon = (p: P) => (
     <path d="M4 12a8 8 0 0 1 14-5.3L20 8M20 4v4h-4M20 12a8 8 0 0 1-14 5.3L4 16M4 20v-4h4" />
   </svg>
 )
+export const BulbIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M9 18h6M10 21h4M12 3a6 6 0 0 1 4 10.5c-.7.6-1 1-1 2.5H9c0-1.5-.3-1.9-1-2.5A6 6 0 0 1 12 3z" />
+  </svg>
+)

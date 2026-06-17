@@ -54,7 +54,7 @@ function TodoRow({
     const completing = !todo.done
     onToggle(todo.id, completing)
     if (completing) {
-      celebrate(rowRef.current)
+      celebrate()
       setFlash(true)
       setTimeout(() => setFlash(false), 700)
     }

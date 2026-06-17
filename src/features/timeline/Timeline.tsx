@@ -5,12 +5,15 @@ import { useNow } from '@/lib/hooks'
 import { cx } from '@/components/ui'
 import {
   CheckCircleIcon,
+  CheckIcon,
   ChevronDownIcon,
   CircleIcon,
   CoffeeIcon,
+  MinusIcon,
   PlayCurrentIcon,
   XIcon
 } from '@/components/Icons'
+import { celebrate } from '@/lib/celebrate'
 import { formatClock, minutesOfDay } from '@/lib/time'
 import type { ClockFormat, HourlyBlock } from '@/lib/types'
 
@@ -33,13 +36,15 @@ function BlockRow({
   isCurrent,
   isPast,
   clockFormat,
-  locked
+  locked,
+  onReschedule
 }: {
   block: HourlyBlock
   isCurrent: boolean
   isPast: boolean
   clockFormat: ClockFormat
   locked: boolean
+  onReschedule: (block: HourlyBlock) => void
 }): JSX.Element {
   const setBlockNote = useStore((s) => s.setBlockNote)
   const setBlockStatus = useStore((s) => s.setBlockStatus)
@@ -64,8 +69,8 @@ function BlockRow({
     : isPast
       ? '—'
       : block.kind === 'lunch'
-        ? 'Lunch break'
-        : 'Tap to add a task…'
+        ? block.label || 'Break'
+        : '+ Add a task'
 
   return (
     <div ref={ref} className="relative pl-12">
@@ -103,7 +108,11 @@ function BlockRow({
           <span
             className={cx(
               'flex-1 min-w-0 truncate font-display tracking-tight',
-              block.note ? 'text-lg font-bold text-content' : 'text-sm font-medium text-content-subtle italic'
+              block.note
+                ? 'text-base font-bold text-content'
+                : !isPast && block.kind === 'work'
+                  ? 'text-sm font-semibold text-accent'
+                  : 'text-sm font-medium text-content-subtle italic'
             )}
           >
             {taskText}
@@ -111,7 +120,7 @@ function BlockRow({
 
           {block.kind === 'lunch' && (
             <span className="shrink-0 rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-warning">
-              Lunch
+              {block.label || 'Break'}
             </span>
           )}
           {isCurrent && (
@@ -147,13 +156,24 @@ function BlockRow({
               className="w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm text-content outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
             {isPast ? (
-              <div className="flex gap-2">
-                <button onClick={() => void setBlockStatus(block.id, 'completed')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-success hover:bg-success/10">
-                  Mark done
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => {
+                    void setBlockStatus(block.id, 'completed')
+                    celebrate()
+                  }}
+                  className="flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium text-success hover:bg-success/10"
+                >
+                  <CheckIcon width={13} height={13} /> Mark done
                 </button>
                 <button onClick={() => void setBlockStatus(block.id, 'missed')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-danger hover:bg-danger/10">
                   Mark missed
                 </button>
+                {block.note.trim() && (
+                  <button onClick={() => onReschedule(block)} className="rounded-lg px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/10">
+                    Reschedule →
+                  </button>
+                )}
                 <button onClick={() => void setBlockStatus(block.id, 'pending')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-content-muted hover:bg-surface-subtle">
                   Reset
                 </button>
@@ -174,6 +194,8 @@ export function Timeline(): JSX.Element {
   const today = useStore((s) => s.today)
   const clockFormat = useStore((s) => s.settings?.clockFormat ?? '12h')
   const lockPastBlocks = useStore((s) => s.settings?.lockPastBlocks ?? false)
+  const setBlockNote = useStore((s) => s.setBlockNote)
+  const setBlockStatus = useStore((s) => s.setBlockStatus)
   const now = useNow(15000)
   const [showPast, setShowPast] = useState(false)
 
@@ -190,6 +212,20 @@ export function Timeline(): JSX.Element {
   const missedCount = past.filter((b) => b.status === 'missed').length
   const emptyCount = past.length - doneCount - missedCount
 
+  // Move a task to the next free upcoming hour today.
+  const reschedule = (block: HourlyBlock): void => {
+    const target = blocks.find(
+      (b) => b.kind === 'work' && b.startMinutes + 60 > nowMin && !b.note.trim() && b.id !== block.id
+    )
+    if (!target) {
+      window.alert('No free hour left today to reschedule into.')
+      return
+    }
+    void setBlockNote(target.id, block.note)
+    void setBlockNote(block.id, '')
+    void setBlockStatus(block.id, 'missed')
+  }
+
   const renderRow = (block: HourlyBlock): JSX.Element => {
     const i = blocks.indexOf(block)
     const isCurrent = i === today.currentBlockIndex
@@ -202,6 +238,7 @@ export function Timeline(): JSX.Element {
         isPast={isPast}
         clockFormat={clockFormat}
         locked={lockPastBlocks && isPast}
+        onReschedule={reschedule}
       />
     )
   }
@@ -213,16 +250,17 @@ export function Timeline(): JSX.Element {
         {past.length > 0 && (
           <button
             onClick={() => setShowPast((v) => !v)}
-            className="flex items-center gap-2 rounded-xl px-3 py-2 text-sm hover:bg-surface-subtle/70 transition-colors text-left"
+            className="flex items-center gap-2 rounded-xl px-3 py-2 hover:bg-surface-subtle/70 transition-colors text-left"
           >
-            <span className={cx('text-content-subtle transition-transform', showPast ? '' : '-rotate-90')}>
+            <span className={cx('text-content-subtle transition-transform shrink-0', showPast ? '' : '-rotate-90')}>
               <ChevronDownIcon width={16} height={16} />
             </span>
-            <span className="font-semibold text-content">Earlier today</span>
-            <span className="text-content-subtle">
-              · {doneCount} done · {missedCount} missed · {emptyCount} empty
+            <span className="text-sm font-semibold text-content">Earlier today</span>
+            <span className="ml-auto flex items-center gap-2.5 text-xs font-medium shrink-0">
+              <span className="flex items-center gap-0.5 text-success"><CheckIcon width={12} height={12} />{doneCount}</span>
+              <span className="flex items-center gap-0.5 text-danger"><XIcon width={12} height={12} />{missedCount}</span>
+              <span className="flex items-center gap-0.5 text-content-subtle"><MinusIcon width={12} height={12} />{emptyCount}</span>
             </span>
-            <span className="ml-auto text-xs font-medium text-accent">{showPast ? 'Hide' : 'Show all'}</span>
           </button>
         )}
 

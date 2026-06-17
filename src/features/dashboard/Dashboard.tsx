@@ -4,7 +4,7 @@ import { useNow } from '@/lib/hooks'
 import { Card, cx } from '@/components/ui'
 import { Timeline } from '../timeline/Timeline'
 import { TodoList } from '../todos/TodoList'
-import { ClockIcon, FlameIcon, ListChecksIcon, TargetIcon } from '@/components/Icons'
+import { BulbIcon, ClockIcon, FlameIcon, TargetIcon } from '@/components/Icons'
 import { WEEKDAY_LONG, dayKey, formatDuration, formatLongDate, formatTime, formatClock, minutesOfDay } from '@/lib/time'
 import { isWorkingNow, totalWorkMinutes, workMinutesElapsed, workMinutesLeft } from '@/lib/schedule'
 import { greeting, vibeCheck } from '@/lib/vibe'
@@ -41,12 +41,15 @@ export function Dashboard(): JSX.Element {
   const progress = totalMin > 0 ? elapsedMin / totalMin : 0
   const working = settings && started ? isWorkingNow(settings, nowMin) : false
 
-  const tasksTotal = dailyTodos.length
-  const tasksDone = dailyTodos.filter((t) => t.done).length
-  const tasksLeft = tasksTotal - tasksDone
+  // "Tasks" reflect the hour-by-hour plan (what's scored), not the brain dump.
+  const workBlocks = today?.blocks.filter((b) => b.kind === 'work') ?? []
+  const tasksDone = workBlocks.filter((b) => b.status === 'completed').length
+  const tasksPlanned = workBlocks.filter((b) => b.note.trim() !== '' || b.status === 'completed').length
+  const tasksLeft = Math.max(0, tasksPlanned - tasksDone)
+  const dumpDone = dailyTodos.filter((t) => t.done).length
 
   const goalMs = (settings?.dailyFocusGoal ?? 360) * 60 * 1000
-  const vibe = vibeCheck({ tasksDone, tasksTotal, focusMs: elapsedMin * 60000, goalMs, withinWorkHours: working })
+  const vibe = vibeCheck({ tasksDone, tasksTotal: tasksPlanned, focusMs: elapsedMin * 60000, goalMs, withinWorkHours: working })
 
   const currentBlock = today && today.currentBlockIndex >= 0 ? today.blocks[today.currentBlockIndex] : null
   const openTodo = dailyTodos.find((t) => !t.done)
@@ -123,19 +126,24 @@ export function Dashboard(): JSX.Element {
           </div>
         </Card>
 
-        {/* To-Dos (full width) */}
+        {/* Brain dump — capture box */}
         <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3">
-            <ListChecksIcon width={18} height={18} className="text-accent" />
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content">To-Dos</h2>
-            <span className="ml-auto text-xs text-content-subtle">{tasksDone}/{tasksTotal} done</span>
+          <div className="flex items-center gap-2">
+            <BulbIcon width={18} height={18} className="text-accent" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-content">Brain dump</h2>
+            {dailyTodos.length > 0 && (
+              <span className="ml-auto text-xs text-content-subtle">{dumpDone}/{dailyTodos.length} cleared</span>
+            )}
           </div>
+          <p className="text-xs text-content-subtle mt-1 mb-3">
+            Park anything here so you don&apos;t forget — it&apos;s not your plan, just a holding pen.
+          </p>
           <TodoList
             todos={dailyTodos}
             enableReminders
             clockFormat={clockFormat}
-            placeholder="What do you want to get done today?"
-            emptyHint="No tasks yet — add your first one above and hit ✓ to save."
+            placeholder="Dump a thought, task or idea…"
+            emptyHint="Nothing parked yet — drop anything you don't want to forget."
             onAdd={(text, rm) => void addDailyTodo(text, rm)}
             onToggle={(id, done) => void toggleDailyTodo(id, done)}
             onUpdate={(id, text) => void updateDailyTodo(id, text)}
@@ -144,12 +152,16 @@ export function Dashboard(): JSX.Element {
           />
         </Card>
 
-        {/* Hourly timeline */}
+        {/* Plan your day — the hour-by-hour plan (scored) */}
         <Card className="p-5">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2">
             <ClockIcon width={18} height={18} className="text-accent" />
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-content">Hourly Timeline</h2>
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-content">Plan your day</h2>
+            <span className="ml-auto text-xs text-content-subtle">{tasksDone}/{tasksPlanned} done</span>
           </div>
+          <p className="text-xs text-content-subtle mt-1 mb-3">
+            Tap an hour and add what you&apos;re doing 👇 — this is the part that gets scored.
+          </p>
           <Timeline />
         </Card>
       </div>
