@@ -52,9 +52,12 @@ interface StoreState {
   showSummary: boolean
   toast: ToastData | null
   systemPrefersDark: boolean
+  /** True while the user is completing a password-reset (recovery) link. */
+  recovering: boolean
 
   init: () => Promise<void>
   signOut: () => Promise<void>
+  setRecovering: (v: boolean) => void
   setRoute: (r: Route) => void
   refreshToday: () => Promise<void>
 
@@ -109,6 +112,9 @@ export const useStore = create<StoreState>((set, get) => ({
   showSummary: false,
   toast: null,
   systemPrefersDark: detectSystemDark(),
+  recovering: false,
+
+  setRecovering: (v) => set({ recovering: v }),
 
   init: async () => {
     const { data } = await supabase.auth.getUser()

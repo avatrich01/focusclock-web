@@ -6,6 +6,7 @@ import { useScheduler } from '@/lib/scheduler'
 import { Sidebar } from '@/components/Sidebar'
 import { NotificationToast } from '@/components/NotificationToast'
 import { Login } from '@/features/auth/Login'
+import { ResetPassword } from '@/features/auth/ResetPassword'
 import { Onboarding } from '@/features/onboarding/Onboarding'
 import { Dashboard } from '@/features/dashboard/Dashboard'
 import { WeeklyTodos } from '@/features/weekly/WeeklyTodos'
@@ -35,6 +36,7 @@ export default function Page(): JSX.Element {
   const settings = useStore((s) => s.settings)
   const route = useStore((s) => s.route)
   const init = useStore((s) => s.init)
+  const recovering = useStore((s) => s.recovering)
   const [menuOpen, setMenuOpen] = useState(false)
 
   useScheduler()
@@ -47,6 +49,10 @@ export default function Page(): JSX.Element {
       navigator.serviceWorker.register('/sw.js').catch(() => {})
     }
     const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        useStore.getState().setRecovering(true)
+        return
+      }
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
         void init()
       }
@@ -56,7 +62,9 @@ export default function Page(): JSX.Element {
 
   return (
     <main className="h-screen w-screen">
-      {!ready ? (
+      {recovering ? (
+        <ResetPassword />
+      ) : !ready ? (
         <Loading />
       ) : !authed ? (
         <Login />
