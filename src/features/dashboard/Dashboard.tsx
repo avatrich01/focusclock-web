@@ -1,22 +1,13 @@
 'use client'
 import { useStore } from '@/lib/useStore'
 import { useNow } from '@/lib/hooks'
-import { useLayout } from '@/lib/useLayout'
 import { Card, cx } from '@/components/ui'
-import { Panel } from '@/components/Panel'
 import { Timeline } from '../timeline/Timeline'
 import { TodoList } from '../todos/TodoList'
-import { ClockIcon, FlameIcon, ListChecksIcon } from '@/components/Icons'
+import { ClockIcon, FlameIcon, ListChecksIcon, TargetIcon } from '@/components/Icons'
 import { WEEKDAY_LONG, formatDuration, formatLongDate, formatTime, formatClock, minutesOfDay } from '@/lib/time'
-import {
-  isWorkingNow,
-  totalWorkMinutes,
-  workMinutesElapsed,
-  workMinutesLeft
-} from '@/lib/schedule'
-import { greeting, vibeCheck, type VibeTone } from '@/lib/vibe'
-
-const SECTIONS = ['todos', 'timeline'] as const
+import { isWorkingNow, totalWorkMinutes, workMinutesElapsed, workMinutesLeft } from '@/lib/schedule'
+import { greeting, vibeCheck } from '@/lib/vibe'
 
 function Metric({ value, label, tone }: { value: string; label: string; tone?: string }): JSX.Element {
   return (
@@ -39,12 +30,10 @@ export function Dashboard(): JSX.Element {
   const setDailyTodoReminder = useStore((s) => s.setDailyTodoReminder)
   const deleteDailyTodo = useStore((s) => s.deleteDailyTodo)
 
-  const layout = useLayout([...SECTIONS])
   const now = useNow(1000)
   const clockFormat = settings?.clockFormat ?? '12h'
   const nowMin = minutesOfDay(now)
 
-  // Auto-counted hours — straight from the schedule, no Start button.
   const elapsedMin = settings ? workMinutesElapsed(settings, nowMin) : 0
   const leftMin = settings ? workMinutesLeft(settings, nowMin) : 0
   const totalMin = settings ? totalWorkMinutes(settings) : 0
@@ -56,19 +45,7 @@ export function Dashboard(): JSX.Element {
   const tasksLeft = tasksTotal - tasksDone
 
   const goalMs = (settings?.dailyFocusGoal ?? 360) * 60 * 1000
-  const vibe = vibeCheck({
-    tasksDone,
-    tasksTotal,
-    focusMs: elapsedMin * 60000,
-    goalMs,
-    withinWorkHours: working
-  })
-  const vibeStyles: Record<VibeTone, string> = {
-    great: 'bg-highlight-soft/60 border-highlight/50 shadow-glow-volt',
-    ok: 'bg-accent-soft/50 border-accent/40',
-    low: 'bg-info-soft/50 border-info/40',
-    empty: 'bg-surface-subtle border-border'
-  }
+  const vibe = vibeCheck({ tasksDone, tasksTotal, focusMs: elapsedMin * 60000, goalMs, withinWorkHours: working })
 
   const currentBlock = today && today.currentBlockIndex >= 0 ? today.blocks[today.currentBlockIndex] : null
   const openTodo = dailyTodos.find((t) => !t.done)
@@ -77,48 +54,32 @@ export function Dashboard(): JSX.Element {
   const hr = now.getHours()
   const bannerEmoji = hr < 12 ? '☀️' : hr < 17 ? '⚡' : '🌙'
 
-  const panels: Record<(typeof SECTIONS)[number], JSX.Element> = {
-    todos: (
-      <TodoList
-        todos={dailyTodos}
-        enableReminders
-        clockFormat={clockFormat}
-        placeholder="What do you want to get done today?"
-        emptyHint="No tasks yet — add your first one above and hit ✓ to save."
-        onAdd={(text, rm) => void addDailyTodo(text, rm)}
-        onToggle={(id, done) => void toggleDailyTodo(id, done)}
-        onUpdate={(id, text) => void updateDailyTodo(id, text)}
-        onSetReminder={(id, rm) => void setDailyTodoReminder(id, rm)}
-        onDelete={(id) => void deleteDailyTodo(id)}
-      />
-    ),
-    timeline: <Timeline />
-  }
-  const panelMeta: Record<(typeof SECTIONS)[number], { title: string; icon: JSX.Element }> = {
-    todos: { title: 'To-Dos', icon: <ListChecksIcon width={18} height={18} /> },
-    timeline: { title: 'Hourly Timeline', icon: <ClockIcon width={18} height={18} /> }
-  }
-
   return (
     <div className="h-full overflow-y-auto">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 md:px-8 py-5 md:py-7 flex flex-col gap-4 sm:gap-5">
-        {/* Compact header */}
+        {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
           <div className="text-content-subtle text-xs font-medium uppercase tracking-wide">
             {WEEKDAY_LONG[now.getDay()]} · {formatLongDate(now)}
           </div>
           <div className="flex items-center gap-3">
             <span className={cx('h-2 w-2 rounded-full', working ? 'bg-success animate-pulse' : 'bg-content-subtle')} />
-            <span className="tabular text-base font-semibold text-content font-display">
-              {formatTime(now, clockFormat, true)}
-            </span>
-            <button onClick={layout.reset} className="text-xs text-content-subtle hover:text-content hidden sm:inline" title="Reset layout">
-              Reset layout
-            </button>
+            <span className="tabular text-base font-semibold text-content font-display">{formatTime(now, clockFormat, true)}</span>
           </div>
         </div>
 
-        {/* HERO — today's stats in a 4-up line + progress. Always on top. */}
+        {/* Greeting + single supportive line (merged) */}
+        <div className="flex items-center gap-3">
+          <span className="text-3xl">{bannerEmoji}</span>
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-content leading-none">
+              {greeting(settings?.userName ?? '', now)}
+            </h1>
+            <p className="text-sm text-content-muted mt-1">{vibe.sub}</p>
+          </div>
+        </div>
+
+        {/* Hero — today's stats, 4-up line + progress */}
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">
             <span className="text-xs font-semibold uppercase tracking-wide text-content-subtle">Today</span>
@@ -141,59 +102,54 @@ export function Dashboard(): JSX.Element {
           </div>
         </Card>
 
-        {/* Greeting + what you're on */}
-        <Card className="overflow-hidden">
-          <div className="flex flex-col sm:flex-row">
-            <div className="flex-1 p-5 flex items-center gap-3.5">
-              <div className="grid place-items-center h-14 w-14 rounded-2xl bg-accent-soft text-3xl shrink-0">{bannerEmoji}</div>
-              <div className="min-w-0">
-                <h1 className="text-2xl font-bold tracking-tight text-content">{greeting(settings?.userName ?? '', now)}</h1>
-                <p className="text-sm text-content-muted mt-0.5 line-clamp-2">{vibe.headline} — {vibe.sub}</p>
-              </div>
+        {/* Right Now + To-Dos on one line (stacks on mobile) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-4 sm:gap-5 items-start">
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <TargetIcon width={16} height={16} className="text-accent" />
+              <span className="text-xs font-semibold uppercase tracking-wide text-accent">Right now</span>
             </div>
-            <div className="sm:w-64 shrink-0 bg-accent/10 border-t sm:border-t-0 sm:border-l border-border p-5 flex flex-col justify-center">
-              <span className="text-xs font-semibold uppercase tracking-wide text-accent">
-                {working ? 'Now working on' : 'Up next'}
-              </span>
-              <div className="text-lg font-bold text-content mt-1 font-display leading-snug break-words">
-                {workingOn ?? 'Add a task →'}
-              </div>
-              {currentBlock && (
-                <div className="text-xs text-content-subtle mt-1 tabular">this hour · {formatClock(currentBlock.startMinutes, clockFormat)}</div>
-              )}
+            <div className="text-xl font-bold text-content font-display leading-snug break-words">
+              {workingOn ?? 'Add a task to lock into →'}
             </div>
-          </div>
-        </Card>
+            {currentBlock ? (
+              <div className="text-xs text-content-subtle mt-2 tabular">
+                this hour · {formatClock(currentBlock.startMinutes, clockFormat)}
+              </div>
+            ) : (
+              <div className="text-xs text-content-subtle mt-2">{working ? 'Working hours' : 'Outside work hours'}</div>
+            )}
+          </Card>
 
-        {/* Vibe */}
-        <div className={cx('rounded-2xl border-2 px-5 py-4 flex items-center gap-3', vibeStyles[vibe.tone])}>
-          <div className="min-w-0">
-            <div className="text-lg font-bold tracking-tight text-content font-display">{vibe.headline}</div>
-            <div className="text-sm text-content-muted mt-0.5">{vibe.sub}</div>
-          </div>
+          <Card className="p-5">
+            <div className="flex items-center gap-2 mb-3">
+              <ListChecksIcon width={18} height={18} className="text-accent" />
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-content">To-Dos</h2>
+              <span className="ml-auto text-xs text-content-subtle">{tasksDone}/{tasksTotal} done</span>
+            </div>
+            <TodoList
+              todos={dailyTodos}
+              enableReminders
+              clockFormat={clockFormat}
+              placeholder="What do you want to get done today?"
+              emptyHint="No tasks yet — add your first one above and hit ✓ to save."
+              onAdd={(text, rm) => void addDailyTodo(text, rm)}
+              onToggle={(id, done) => void toggleDailyTodo(id, done)}
+              onUpdate={(id, text) => void updateDailyTodo(id, text)}
+              onSetReminder={(id, rm) => void setDailyTodoReminder(id, rm)}
+              onDelete={(id) => void deleteDailyTodo(id)}
+            />
+          </Card>
         </div>
 
-        {/* Movable panels */}
-        {layout.order.map((id, idx) => {
-          const key = id as (typeof SECTIONS)[number]
-          const meta = panelMeta[key]
-          if (!meta) return null
-          return (
-            <Panel
-              key={key}
-              title={meta.title}
-              icon={meta.icon}
-              collapsed={!!layout.collapsed[key]}
-              onToggleCollapse={() => layout.toggleCollapse(key)}
-              onMoveUp={() => layout.moveUp(key)}
-              onMoveDown={() => layout.moveDown(key)}
-              canMoveUp={idx > 0}
-              canMoveDown={idx < layout.order.length - 1}
-            >
-              {panels[key]}
-            </Panel>
-          )
-        })}
+        {/* Hourly timeline */}
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <ClockIcon width={18} height={18} className="text-accent" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-content">Hourly Timeline</h2>
+          </div>
+          <Timeline />
+        </Card>
       </div>
     </div>
   )

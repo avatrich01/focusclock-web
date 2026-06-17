@@ -43,6 +43,34 @@ const PATTERNS: Record<SoundName, Tone[]> = {
   ]
 }
 
+/** A short, bright arpeggio played when a task is completed. */
+export function playSuccessSound(volume = 0.45): void {
+  try {
+    const ctx = audioContext()
+    const master = ctx.createGain()
+    master.gain.value = Math.max(0, Math.min(1, volume))
+    master.connect(ctx.destination)
+    const now = ctx.currentTime
+    ;[523.25, 659.25, 783.99].forEach((freq, i) => {
+      const osc = ctx.createOscillator()
+      const g = ctx.createGain()
+      osc.type = 'sine'
+      osc.frequency.value = freq
+      const t0 = now + i * 0.08
+      const t1 = t0 + 0.18
+      g.gain.setValueAtTime(0.0001, t0)
+      g.gain.exponentialRampToValueAtTime(0.4, t0 + 0.02)
+      g.gain.exponentialRampToValueAtTime(0.0001, t1)
+      osc.connect(g)
+      g.connect(master)
+      osc.start(t0)
+      osc.stop(t1 + 0.05)
+    })
+  } catch {
+    /* audio may be blocked until interaction */
+  }
+}
+
 export function playNotificationSound(sound: SoundName, volume: number): void {
   try {
     const context = audioContext()

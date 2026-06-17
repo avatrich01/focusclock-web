@@ -75,10 +75,10 @@ function BlockRow({
 
       <div
         className={cx(
-          'rounded-2xl border px-4 py-3 transition-all duration-300',
+          'rounded-2xl border px-4 py-3 transition-colors duration-200',
           locked ? 'cursor-default' : 'cursor-pointer',
           isCurrent
-            ? 'border-accent/60 bg-accent-soft/40 animate-pulse-glow'
+            ? 'border-2 border-accent bg-accent-soft/40'
             : block.status === 'completed'
               ? 'border-border-subtle bg-surface-raised/60'
               : block.status === 'missed'
@@ -115,7 +115,7 @@ function BlockRow({
             </span>
           )}
           {isCurrent && (
-            <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-accent">
+            <span className="shrink-0 rounded-full bg-accent px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">
               Now
             </span>
           )}

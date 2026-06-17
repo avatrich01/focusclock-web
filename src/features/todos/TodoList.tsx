@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { ClockFormat, Todo } from '@/lib/types'
 import { formatClock, parseHHMM, toHHMM } from '@/lib/time'
+import { celebrate } from '@/lib/celebrate'
 import { cx } from '@/components/ui'
 import { BellIcon, CheckIcon, PlusIcon, TrashIcon, XIcon } from '@/components/Icons'
 
@@ -38,6 +39,8 @@ function TodoRow({
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(todo.text)
   const [editingReminder, setEditingReminder] = useState(false)
+  const [flash, setFlash] = useState(false)
+  const rowRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => setDraft(todo.text), [todo.text])
 
@@ -47,22 +50,34 @@ function TodoRow({
     else if (!draft.trim()) onDelete(todo.id)
   }
 
+  function toggle(): void {
+    const completing = !todo.done
+    onToggle(todo.id, completing)
+    if (completing) {
+      celebrate(rowRef.current)
+      setFlash(true)
+      setTimeout(() => setFlash(false), 700)
+    }
+  }
+
   const hasReminder = todo.reminderMinutes !== null
 
   return (
     <div
+      ref={rowRef}
       className={cx(
-        'group flex items-center gap-4 rounded-2xl border-l-[3px] pl-3 pr-4 py-3.5 transition-all',
+        'group flex items-center gap-4 rounded-2xl border-l-[3px] pl-3 pr-4 py-3.5 transition-all duration-300',
+        flash && 'ring-2 ring-success bg-success/10',
         todo.done
           ? 'border-transparent hover:bg-surface-subtle/50'
           : 'border-accent/70 bg-surface-subtle/40 hover:bg-surface-subtle/80'
       )}
     >
       <button
-        onClick={() => onToggle(todo.id, !todo.done)}
+        onClick={toggle}
         className={cx(
           'grid place-items-center h-7 w-7 rounded-lg border-2 shrink-0 transition-all',
-          todo.done ? 'bg-accent border-accent text-white' : 'border-content-subtle/50 hover:border-accent hover:scale-105'
+          todo.done ? 'bg-success border-success text-white' : 'border-content-subtle/50 hover:border-accent hover:scale-105'
         )}
         aria-pressed={todo.done}
       >
