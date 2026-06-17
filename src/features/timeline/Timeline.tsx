@@ -146,17 +146,23 @@ function BlockRow({
               rows={2}
               className="w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm text-content outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
             />
-            <div className="flex gap-2">
-              <button onClick={() => void setBlockStatus(block.id, 'completed')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-success hover:bg-success/10">
-                Mark done
-              </button>
-              <button onClick={() => void setBlockStatus(block.id, 'missed')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-danger hover:bg-danger/10">
-                Mark missed
-              </button>
-              <button onClick={() => void setBlockStatus(block.id, 'pending')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-content-muted hover:bg-surface-subtle">
-                Reset
-              </button>
-            </div>
+            {isPast ? (
+              <div className="flex gap-2">
+                <button onClick={() => void setBlockStatus(block.id, 'completed')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-success hover:bg-success/10">
+                  Mark done
+                </button>
+                <button onClick={() => void setBlockStatus(block.id, 'missed')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-danger hover:bg-danger/10">
+                  Mark missed
+                </button>
+                <button onClick={() => void setBlockStatus(block.id, 'pending')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-content-muted hover:bg-surface-subtle">
+                  Reset
+                </button>
+              </div>
+            ) : (
+              <div className="text-xs text-content-subtle">
+                Add your task now — you can mark it done or missed once the hour passes.
+              </div>
+            )}
           </div>
         )}
       </div>

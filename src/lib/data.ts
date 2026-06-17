@@ -765,3 +765,49 @@ export async function buildReport(fromDay: string, toDay: string): Promise<Activ
 
 // Used by the scheduler to assemble the end-of-day recap payload.
 export { completedDailyTodos }
+
+// ─────────────────────────────── leaderboard ────────────────────────────────
+import type { LeaderboardEntry } from './types'
+
+/** Publish this user's current score to the shared leaderboard. */
+export async function updateLeaderboardEntry(): Promise<void> {
+  const settings = await getSettings()
+  if (!settings.onboarded) return
+  const weekly = await computeWeekly()
+  const monday = startOfWeek(dayKey())
+  const fromMs = new Date(`${monday}T00:00:00`).getTime()
+  const tasksDone = (await completedTodosBetween(fromMs, Date.now())).length
+  const focusMs = weekly.totalWorkedMs
+  const streak = weekly.streak.current
+  // Simple game-y score: focus hours + tasks + streak all contribute.
+  const points = Math.round(focusMs / 3_600_000) * 10 + tasksDone * 5 + streak * 15
+  await supabase.from('leaderboard').upsert(
+    {
+      user_id: requireUid(),
+      name: settings.userName.trim() || 'Anonymous',
+      points,
+      focus_ms: focusMs,
+      tasks_done: tasksDone,
+      streak,
+      updated_at: new Date().toISOString()
+    },
+    { onConflict: 'user_id' }
+  )
+}
+
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
+  const { data } = await supabase
+    .from('leaderboard')
+    .select('*')
+    .order('points', { ascending: false })
+    .order('focus_ms', { ascending: false })
+    .limit(100)
+  return (data ?? []).map((r: any) => ({
+    userId: r.user_id,
+    name: r.name,
+    points: r.points,
+    focusMs: r.focus_ms,
+    tasksDone: r.tasks_done,
+    streak: r.streak
+  }))
+}

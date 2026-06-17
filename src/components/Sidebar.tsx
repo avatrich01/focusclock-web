@@ -8,6 +8,7 @@ import {
   BarChartIcon,
   ClockIcon,
   FileTextIcon,
+  FlameIcon,
   HomeIcon,
   ListChecksIcon,
   LogOutIcon,
@@ -18,6 +19,7 @@ const NAV: { route: Route; label: string; icon: ReactNode }[] = [
   { route: 'dashboard', label: 'Today', icon: <HomeIcon width={18} height={18} /> },
   { route: 'weekly', label: 'Weekly To-Dos', icon: <ListChecksIcon width={18} height={18} /> },
   { route: 'analytics', label: 'Analytics', icon: <BarChartIcon width={18} height={18} /> },
+  { route: 'leaderboard', label: 'Leaderboard', icon: <FlameIcon width={18} height={18} /> },
   { route: 'reports', label: 'Reports', icon: <FileTextIcon width={18} height={18} /> },
   { route: 'settings', label: 'Settings', icon: <SettingsIcon width={18} height={18} /> }
 ]

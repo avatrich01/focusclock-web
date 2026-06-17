@@ -11,6 +11,7 @@ import { Onboarding } from '@/features/onboarding/Onboarding'
 import { Dashboard } from '@/features/dashboard/Dashboard'
 import { WeeklyTodos } from '@/features/weekly/WeeklyTodos'
 import { Analytics } from '@/features/analytics/Analytics'
+import { Leaderboard } from '@/features/leaderboard/Leaderboard'
 import { Reports } from '@/features/reports/Reports'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 import { SummaryModal } from '@/features/summary/SummaryModal'
@@ -107,6 +108,7 @@ export default function Page(): JSX.Element {
             {route === 'dashboard' && <Dashboard />}
             {route === 'weekly' && <WeeklyTodos />}
             {route === 'analytics' && <Analytics />}
+            {route === 'leaderboard' && <Leaderboard />}
             {route === 'reports' && <Reports />}
             {route === 'settings' && <SettingsPage />}
           </div>

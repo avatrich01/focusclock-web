@@ -66,22 +66,22 @@ function TodoRow({
     <div
       ref={rowRef}
       className={cx(
-        'group flex items-center gap-4 rounded-2xl border-l-[3px] pl-3 pr-4 py-3.5 transition-all duration-300',
+        'group flex items-center gap-2.5 rounded-xl border-l-2 pl-2 pr-2.5 py-1.5 transition-all duration-300',
         flash && 'ring-2 ring-success bg-success/10',
         todo.done
           ? 'border-transparent hover:bg-surface-subtle/50'
-          : 'border-accent/70 bg-surface-subtle/40 hover:bg-surface-subtle/80'
+          : 'border-accent/60 bg-surface-subtle/40 hover:bg-surface-subtle/80'
       )}
     >
       <button
         onClick={toggle}
         className={cx(
-          'grid place-items-center h-7 w-7 rounded-lg border-2 shrink-0 transition-all',
+          'grid place-items-center h-5 w-5 rounded-md border-2 shrink-0 transition-all',
           todo.done ? 'bg-success border-success text-white' : 'border-content-subtle/50 hover:border-accent hover:scale-105'
         )}
         aria-pressed={todo.done}
       >
-        {todo.done && <CheckIcon width={16} height={16} />}
+        {todo.done && <CheckIcon width={13} height={13} />}
       </button>
 
       {editing ? (
@@ -97,13 +97,13 @@ function TodoRow({
               setEditing(false)
             }
           }}
-          className="flex-1 bg-transparent text-lg font-semibold text-content outline-none border-b-2 border-accent/50"
+          className="flex-1 bg-transparent text-sm font-medium text-content outline-none border-b border-accent/50"
         />
       ) : (
         <span
           onClick={() => setEditing(true)}
           className={cx(
-            'flex-1 min-w-0 text-lg font-semibold leading-snug cursor-text break-words tracking-tight',
+            'flex-1 min-w-0 text-sm font-medium leading-snug cursor-text break-words',
             todo.done ? 'text-content-subtle line-through' : 'text-content'
           )}
         >
@@ -193,8 +193,8 @@ export function TodoList({
 
   return (
     <div className="flex flex-col gap-1">
-      <div className="flex items-center gap-2.5 rounded-2xl border-2 border-border bg-surface-subtle/60 px-4 py-3 focus-within:border-accent focus-within:ring-4 focus-within:ring-accent/15 transition">
-        <PlusIcon width={20} height={20} className="text-accent shrink-0" />
+      <div className="flex items-center gap-2 rounded-xl border border-border bg-surface-subtle/60 px-3 py-2 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/20 transition">
+        <PlusIcon width={18} height={18} className="text-accent shrink-0" />
         <input
           ref={inputRef}
           value={text}
@@ -203,7 +203,7 @@ export function TodoList({
             if (e.key === 'Enter') save()
           }}
           placeholder={placeholder}
-          className="flex-1 bg-transparent text-base font-medium text-content outline-none placeholder:text-content-subtle placeholder:font-normal"
+          className="flex-1 bg-transparent text-sm text-content outline-none placeholder:text-content-subtle"
         />
         {enableReminders &&
           (reminderOpen ? (
@@ -228,11 +228,11 @@ export function TodoList({
           disabled={!text.trim()}
           aria-label="Save task"
           className={cx(
-            'grid place-items-center h-9 w-9 rounded-xl transition-all shrink-0',
-            text.trim() ? 'bg-accent text-white hover:brightness-110 shadow-glow' : 'bg-border text-content-subtle pointer-events-none'
+            'grid place-items-center h-7 w-7 rounded-lg transition-all shrink-0',
+            text.trim() ? 'bg-accent text-white hover:brightness-110' : 'bg-border text-content-subtle pointer-events-none'
           )}
         >
-          <CheckIcon width={18} height={18} />
+          <CheckIcon width={16} height={16} />
         </button>
       </div>
 

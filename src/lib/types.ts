@@ -136,6 +136,15 @@ export interface ActivityReport {
   perDay: DailyStat[]
 }
 
+export interface LeaderboardEntry {
+  userId: string
+  name: string
+  points: number
+  focusMs: number
+  tasksDone: number
+  streak: number
+}
+
 export interface DailySummaryPayload {
   snapshot: TodaySnapshot
   weekly: WeeklyAnalytics

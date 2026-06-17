@@ -14,7 +14,7 @@ import type {
   WeeklyAnalytics
 } from './types'
 
-export type Route = 'dashboard' | 'weekly' | 'analytics' | 'reports' | 'settings'
+export type Route = 'dashboard' | 'weekly' | 'analytics' | 'leaderboard' | 'reports' | 'settings'
 
 export interface ToastData {
   id: number
@@ -38,6 +38,7 @@ function applyThemeClass(settings: Settings | null, systemDark: boolean): void {
 interface StoreState {
   ready: boolean
   authed: boolean
+  userId: string | null
   settings: Settings | null
   today: TodaySnapshot | null
   weekly: WeeklyAnalytics | null
@@ -88,6 +89,7 @@ interface StoreState {
 export const useStore = create<StoreState>((set, get) => ({
   ready: false,
   authed: false,
+  userId: null,
   settings: null,
   today: null,
   weekly: null,
@@ -125,12 +127,15 @@ export const useStore = create<StoreState>((set, get) => ({
     set({
       ready: true,
       authed: true,
+      userId,
       settings,
       today,
       weekly,
       dailyTodos,
       dailyBucket: bucket
     })
+    // Publish our score to the shared leaderboard (best-effort).
+    void db.updateLeaderboardEntry().catch(() => {})
 
     if (typeof window !== 'undefined') {
       const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -147,7 +152,7 @@ export const useStore = create<StoreState>((set, get) => ({
   signOut: async () => {
     await supabase.auth.signOut()
     db.setUserId(null)
-    set({ authed: false, ready: true, settings: null, today: null })
+    set({ authed: false, ready: true, userId: null, settings: null, today: null })
   },
 
   setRoute: (route) => set({ route }),
@@ -197,6 +202,7 @@ export const useStore = create<StoreState>((set, get) => ({
   },
   toggleDailyTodo: async (id, done) => {
     set({ dailyTodos: await db.setTodoDone(id, done, 'daily', get().dailyBucket) })
+    void db.updateLeaderboardEntry().catch(() => {})
   },
   updateDailyTodo: async (id, text) => {
     set({ dailyTodos: await db.updateTodoText(id, text, 'daily', get().dailyBucket) })

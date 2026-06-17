@@ -102,45 +102,46 @@ export function Dashboard(): JSX.Element {
           </div>
         </Card>
 
-        {/* Right Now + To-Dos on one line (stacks on mobile) */}
-        <div className="grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-4 sm:gap-5 items-start">
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-2">
-              <TargetIcon width={16} height={16} className="text-accent" />
-              <span className="text-xs font-semibold uppercase tracking-wide text-accent">Right now</span>
-            </div>
-            <div className="text-xl font-bold text-content font-display leading-snug break-words">
+        {/* Right Now — what to focus on this hour */}
+        <Card className="p-4 sm:p-5 flex items-center gap-4">
+          <div className="grid place-items-center h-11 w-11 rounded-xl bg-accent-soft text-accent shrink-0">
+            <TargetIcon width={22} height={22} />
+          </div>
+          <div className="min-w-0">
+            <span className="text-xs font-semibold uppercase tracking-wide text-accent">Right now</span>
+            <div className="text-lg sm:text-xl font-bold text-content font-display leading-snug break-words">
               {workingOn ?? 'Add a task to lock into →'}
             </div>
-            {currentBlock ? (
-              <div className="text-xs text-content-subtle mt-2 tabular">
-                this hour · {formatClock(currentBlock.startMinutes, clockFormat)}
-              </div>
-            ) : (
-              <div className="text-xs text-content-subtle mt-2">{working ? 'Working hours' : 'Outside work hours'}</div>
-            )}
-          </Card>
-
-          <Card className="p-5">
-            <div className="flex items-center gap-2 mb-3">
-              <ListChecksIcon width={18} height={18} className="text-accent" />
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-content">To-Dos</h2>
-              <span className="ml-auto text-xs text-content-subtle">{tasksDone}/{tasksTotal} done</span>
+            <div className="text-xs text-content-subtle mt-0.5 tabular">
+              {currentBlock
+                ? `this hour · ${formatClock(currentBlock.startMinutes, clockFormat)}`
+                : working
+                  ? 'Working hours'
+                  : 'Outside work hours'}
             </div>
-            <TodoList
-              todos={dailyTodos}
-              enableReminders
-              clockFormat={clockFormat}
-              placeholder="What do you want to get done today?"
-              emptyHint="No tasks yet — add your first one above and hit ✓ to save."
-              onAdd={(text, rm) => void addDailyTodo(text, rm)}
-              onToggle={(id, done) => void toggleDailyTodo(id, done)}
-              onUpdate={(id, text) => void updateDailyTodo(id, text)}
-              onSetReminder={(id, rm) => void setDailyTodoReminder(id, rm)}
-              onDelete={(id) => void deleteDailyTodo(id)}
-            />
-          </Card>
-        </div>
+          </div>
+        </Card>
+
+        {/* To-Dos (full width) */}
+        <Card className="p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <ListChecksIcon width={18} height={18} className="text-accent" />
+            <h2 className="text-sm font-semibold uppercase tracking-wide text-content">To-Dos</h2>
+            <span className="ml-auto text-xs text-content-subtle">{tasksDone}/{tasksTotal} done</span>
+          </div>
+          <TodoList
+            todos={dailyTodos}
+            enableReminders
+            clockFormat={clockFormat}
+            placeholder="What do you want to get done today?"
+            emptyHint="No tasks yet — add your first one above and hit ✓ to save."
+            onAdd={(text, rm) => void addDailyTodo(text, rm)}
+            onToggle={(id, done) => void toggleDailyTodo(id, done)}
+            onUpdate={(id, text) => void updateDailyTodo(id, text)}
+            onSetReminder={(id, rm) => void setDailyTodoReminder(id, rm)}
+            onDelete={(id) => void deleteDailyTodo(id)}
+          />
+        </Card>
 
         {/* Hourly timeline */}
         <Card className="p-5">

@@ -111,6 +111,26 @@ create table if not exists public.push_subscriptions (
 );
 create index if not exists idx_push_user on public.push_subscriptions (user_id);
 
+-- ─────────────────────────── leaderboard (shared) ───────────────────────────
+-- A public scoreboard: each user writes only their own row, but every signed-in
+-- user can read all rows to see the ranking.
+create table if not exists public.leaderboard (
+  user_id uuid primary key default auth.uid() references auth.users (id) on delete cascade,
+  name text not null default 'Anonymous',
+  points int not null default 0,
+  focus_ms bigint not null default 0,
+  tasks_done int not null default 0,
+  streak int not null default 0,
+  updated_at timestamptz not null default now()
+);
+alter table public.leaderboard enable row level security;
+drop policy if exists "lb_read" on public.leaderboard;
+drop policy if exists "lb_write_insert" on public.leaderboard;
+drop policy if exists "lb_write_update" on public.leaderboard;
+create policy "lb_read" on public.leaderboard for select to authenticated using (true);
+create policy "lb_write_insert" on public.leaderboard for insert to authenticated with check (auth.uid() = user_id);
+create policy "lb_write_update" on public.leaderboard for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
 -- ─────────────────────────── Row Level Security ─────────────────────────────
 alter table public.settings enable row level security;
 alter table public.hourly_blocks enable row level security;

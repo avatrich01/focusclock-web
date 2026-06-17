@@ -207,3 +207,8 @@ export const MenuIcon = (p: P) => (
     <path d="M4 6h16M4 12h16M4 18h16" />
   </svg>
 )
+export const RefreshIcon = (p: P) => (
+  <svg {...base(p)}>
+    <path d="M4 12a8 8 0 0 1 14-5.3L20 8M20 4v4h-4M20 12a8 8 0 0 1-14 5.3L4 16M4 20v-4h4" />
+  </svg>
+)
