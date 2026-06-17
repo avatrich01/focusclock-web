@@ -1,5 +1,5 @@
 'use client'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabaseClient'
 import { useStore } from '@/lib/useStore'
 import { useScheduler } from '@/lib/scheduler'
@@ -14,7 +14,7 @@ import { Reports } from '@/features/reports/Reports'
 import { SettingsPage } from '@/features/settings/SettingsPage'
 import { RecoveryModal } from '@/features/recovery/RecoveryModal'
 import { SummaryModal } from '@/features/summary/SummaryModal'
-import { ClockIcon } from '@/components/Icons'
+import { ClockIcon, MenuIcon } from '@/components/Icons'
 
 function Loading(): JSX.Element {
   return (
@@ -35,6 +35,7 @@ export default function Page(): JSX.Element {
   const settings = useStore((s) => s.settings)
   const route = useStore((s) => s.route)
   const init = useStore((s) => s.init)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useScheduler()
 
@@ -62,9 +63,40 @@ export default function Page(): JSX.Element {
       ) : !settings?.onboarded ? (
         <Onboarding />
       ) : (
-        <div className="h-full w-full flex bg-surface text-content">
-          <Sidebar />
-          <div className="flex-1 min-w-0">
+        <div className="h-full w-full flex flex-col md:flex-row bg-surface text-content">
+          {/* Mobile top bar */}
+          <header className="md:hidden flex items-center gap-3 h-14 px-4 border-b border-border bg-surface-subtle/70 shrink-0">
+            <button
+              onClick={() => setMenuOpen(true)}
+              aria-label="Open menu"
+              className="grid place-items-center h-9 w-9 rounded-xl text-content hover:bg-surface-raised"
+            >
+              <MenuIcon width={22} height={22} />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="grid place-items-center h-8 w-8 rounded-lg bg-accent text-white">
+                <ClockIcon width={18} height={18} />
+              </div>
+              <span className="font-display font-bold text-content">FocusClock</span>
+            </div>
+          </header>
+
+          {/* Desktop sidebar */}
+          <div className="hidden md:flex">
+            <Sidebar />
+          </div>
+
+          {/* Mobile drawer */}
+          {menuOpen && (
+            <div className="md:hidden fixed inset-0 z-40">
+              <div className="absolute inset-0 bg-black/50 animate-fade-in" onClick={() => setMenuOpen(false)} />
+              <div className="absolute left-0 top-0 h-full animate-slide-in-left">
+                <Sidebar onNavigate={() => setMenuOpen(false)} />
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 min-w-0 min-h-0">
             {route === 'dashboard' && <Dashboard />}
             {route === 'weekly' && <WeeklyTodos />}
             {route === 'analytics' && <Analytics />}

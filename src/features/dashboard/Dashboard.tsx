@@ -168,12 +168,12 @@ export function Dashboard(): JSX.Element {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-5xl px-8 py-7 flex flex-col gap-5">
-        <div className="flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 md:px-8 py-6 flex flex-col gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
           <div className="text-content-subtle text-xs font-medium uppercase tracking-wide">
             {WEEKDAY_LONG[now.getDay()]} · {formatLongDate(now)}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
             <div className="flex items-center gap-2">
               <span className={cx('h-2.5 w-2.5 rounded-full', state === 'running' ? 'bg-success animate-pulse' : state === 'paused' ? 'bg-warning' : 'bg-content-subtle')} />
               <span className={cx('text-sm font-semibold', stateTone)}>{stateText}</span>
@@ -194,7 +194,7 @@ export function Dashboard(): JSX.Element {
           <div className="h-3 rounded-full bg-surface-subtle overflow-hidden">
             <div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${Math.max(focusPct * 100, focusPct > 0 ? 4 : 0)}%` }} />
           </div>
-          <div className="flex items-center justify-between gap-4 mt-3 text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mt-3 text-sm">
             <div className="text-content-muted">
               <span className="font-bold text-content tabular font-display">{totalWorkHours}</span> hours
               <span className="text-content-subtle"> · </span>

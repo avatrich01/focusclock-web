@@ -51,7 +51,7 @@ export function Onboarding(): JSX.Element {
   }
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-surface flex items-center justify-center p-8">
+    <div className="h-full w-full overflow-y-auto bg-surface flex items-center justify-center p-4 sm:p-8">
       <div className="w-full max-w-3xl animate-fade-in">
         <div className="flex items-center gap-3 mb-8">
           <div className="grid place-items-center h-12 w-12 rounded-2xl bg-accent text-white shadow-glow">

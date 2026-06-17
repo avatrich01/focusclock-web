@@ -80,7 +80,7 @@ export function SettingsPage(): JSX.Element {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="mx-auto max-w-2xl px-8 py-8 flex flex-col gap-6">
+      <div className="mx-auto max-w-2xl px-4 sm:px-6 md:px-8 py-6 md:py-8 flex flex-col gap-6">
         <div className="flex items-center gap-2 animate-fade-in">
           <SettingsIcon className="text-accent" width={22} height={22} />
           <h1 className="text-xl font-semibold text-content">Settings</h1>

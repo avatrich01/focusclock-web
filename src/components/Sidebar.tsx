@@ -20,7 +20,7 @@ const NAV: { route: Route; label: string; icon: ReactNode }[] = [
   { route: 'settings', label: 'Settings', icon: <SettingsIcon width={18} height={18} /> }
 ]
 
-export function Sidebar(): JSX.Element {
+export function Sidebar({ onNavigate }: { onNavigate?: () => void }): JSX.Element {
   const route = useStore((s) => s.route)
   const setRoute = useStore((s) => s.setRoute)
   const signOut = useStore((s) => s.signOut)
@@ -34,7 +34,7 @@ export function Sidebar(): JSX.Element {
         : 'bg-content-subtle'
 
   return (
-    <aside className="w-60 shrink-0 border-r border-border bg-surface-subtle/60 flex flex-col">
+    <aside className="w-60 h-full shrink-0 border-r border-border bg-surface-raised md:bg-surface-subtle/60 flex flex-col">
       <div className="flex items-center gap-2.5 px-5 h-16">
         <div className="grid place-items-center h-9 w-9 rounded-xl bg-accent text-white shadow-glow">
           <ClockIcon width={20} height={20} />
@@ -46,7 +46,10 @@ export function Sidebar(): JSX.Element {
         {NAV.map((item) => (
           <button
             key={item.route}
-            onClick={() => setRoute(item.route)}
+            onClick={() => {
+              setRoute(item.route)
+              onNavigate?.()
+            }}
             className={cx(
               'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors',
               route === item.route

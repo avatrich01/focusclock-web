@@ -62,13 +62,18 @@ const config: Config = {
         'slide-down': {
           '0%': { opacity: '0', transform: 'translateY(-16px)' },
           '100%': { opacity: '1', transform: 'translateY(0)' }
+        },
+        'slide-in-left': {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(0)' }
         }
       },
       animation: {
         'pulse-glow': 'pulse-glow 2.4s ease-in-out infinite',
         'fade-in': 'fade-in 0.35s ease-out both',
         'scale-in': 'scale-in 0.2s ease-out both',
-        'slide-down': 'slide-down 0.3s ease-out both'
+        'slide-down': 'slide-down 0.3s ease-out both',
+        'slide-in-left': 'slide-in-left 0.25s ease-out both'
       }
     }
   },
