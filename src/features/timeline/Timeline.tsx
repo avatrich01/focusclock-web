@@ -22,10 +22,12 @@ function StatusIcon({ block, isCurrent }: { block: HourlyBlock; isCurrent: boole
   if (block.status === 'completed') return <CheckCircleIcon className="text-success" width={22} height={22} />
   if (block.status === 'missed') return <XIcon className="text-danger" width={20} height={20} />
   if (block.status === 'worked')
-    return (
-      <span className="grid h-[22px] w-[22px] place-items-center" title="Worked, no task logged">
-        <span className="h-2.5 w-2.5 rounded-full bg-content-subtle/70" />
+    return block.note.trim() ? (
+      <span className="grid h-[22px] w-[22px] place-items-center" title="Task logged — mark it done or missed">
+        <span className="h-2.5 w-2.5 rounded-full bg-accent/70" />
       </span>
+    ) : (
+      <CircleIcon className="text-content-subtle/50" width={20} height={20} />
     )
   if (block.kind === 'lunch') return <CoffeeIcon className="text-warning" width={20} height={20} />
   return <CircleIcon className="text-content-subtle" width={20} height={20} />
@@ -64,6 +66,12 @@ function BlockRow({
     if (draft !== block.note) void setBlockNote(block.id, draft)
   }
 
+  const hasNote = block.note.trim() !== ''
+  // The past can't be altered. You can only act on a past hour if a task was
+  // already on it (mark done/missed/reschedule). Current/future can be edited.
+  // Lunch/break and empty past hours are not actionable at all.
+  const actionable = !locked && block.kind === 'work' && (!isPast || hasNote)
+
   const taskText = block.note
     ? block.note
     : isPast
@@ -81,7 +89,7 @@ function BlockRow({
       <div
         className={cx(
           'rounded-2xl border px-4 py-3 transition-colors duration-200',
-          locked ? 'cursor-default' : 'cursor-pointer',
+          actionable ? 'cursor-pointer' : 'cursor-default',
           isCurrent
             ? 'border-2 border-accent bg-accent-soft/40'
             : block.status === 'completed'
@@ -92,7 +100,7 @@ function BlockRow({
           isFuture && 'opacity-70'
         )}
         onClick={() => {
-          if (!locked) setExpanded((v) => !v)
+          if (actionable) setExpanded((v) => !v)
         }}
       >
         <div className="flex items-center gap-3">
@@ -145,17 +153,23 @@ function BlockRow({
           )}
         </div>
 
-        {expanded && (
+        {expanded && actionable && (
           <div className="mt-3 flex flex-col gap-2" onClick={(e) => e.stopPropagation()}>
-            <textarea
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              onBlur={commitNote}
-              placeholder="What are you working on this hour?"
-              rows={2}
-              className="w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm text-content outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
-            />
-            {isPast ? (
+            {!isPast ? (
+              <>
+                <textarea
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onBlur={commitNote}
+                  placeholder="What are you working on this hour?"
+                  rows={2}
+                  className="w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-sm text-content outline-none focus:border-accent focus:ring-2 focus:ring-accent/30"
+                />
+                <div className="text-xs text-content-subtle">
+                  Add your task now — you can mark it done or missed once the hour passes.
+                </div>
+              </>
+            ) : (
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => {
@@ -169,18 +183,12 @@ function BlockRow({
                 <button onClick={() => void setBlockStatus(block.id, 'missed')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-danger hover:bg-danger/10">
                   Mark missed
                 </button>
-                {block.note.trim() && (
-                  <button onClick={() => onReschedule(block)} className="rounded-lg px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/10">
-                    Reschedule →
-                  </button>
-                )}
+                <button onClick={() => onReschedule(block)} className="rounded-lg px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/10">
+                  Reschedule →
+                </button>
                 <button onClick={() => void setBlockStatus(block.id, 'pending')} className="rounded-lg px-2.5 py-1 text-xs font-medium text-content-muted hover:bg-surface-subtle">
                   Reset
                 </button>
-              </div>
-            ) : (
-              <div className="text-xs text-content-subtle">
-                Add your task now — you can mark it done or missed once the hour passes.
               </div>
             )}
           </div>

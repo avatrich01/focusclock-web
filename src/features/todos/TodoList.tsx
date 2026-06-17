@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import type { ClockFormat, Todo } from '@/lib/types'
-import { formatClock, parseHHMM, toHHMM } from '@/lib/time'
+import { formatClock, minutesOfDay, parseHHMM, toHHMM } from '@/lib/time'
 import { celebrate } from '@/lib/celebrate'
 import { cx } from '@/components/ui'
 import { BellIcon, CheckIcon, PlusIcon, TrashIcon, XIcon } from '@/components/Icons'
@@ -117,9 +117,15 @@ function TodoRow({
             <input
               type="time"
               autoFocus
+              min={toHHMM(minutesOfDay())}
               defaultValue={hasReminder ? toHHMM(todo.reminderMinutes as number) : ''}
               onBlur={() => setEditingReminder(false)}
-              onChange={(e) => onSetReminder(todo.id, e.target.value ? parseHHMM(e.target.value) : null)}
+              onChange={(e) => {
+                if (!e.target.value) return onSetReminder(todo.id, null)
+                const m = parseHHMM(e.target.value)
+                if (m < minutesOfDay()) return
+                onSetReminder(todo.id, m)
+              }}
               className="rounded-md border border-border bg-surface px-1.5 py-0.5 text-xs tabular text-content outline-none focus:border-accent"
             />
           ) : hasReminder ? (
@@ -210,7 +216,12 @@ export function TodoList({
             <input
               type="time"
               value={reminder}
-              onChange={(e) => setReminder(e.target.value)}
+              min={toHHMM(minutesOfDay())}
+              onChange={(e) => {
+                const v = e.target.value
+                if (v && parseHHMM(v) < minutesOfDay()) return
+                setReminder(v)
+              }}
               className="rounded-md border border-border bg-surface px-1.5 py-0.5 text-xs tabular text-content outline-none focus:border-accent shrink-0"
             />
           ) : (
