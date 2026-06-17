@@ -5,18 +5,22 @@ export function TimeField({
   label,
   value,
   onChange,
-  hint
+  hint,
+  min
 }: {
   label: string
   value: number
   onChange: (minutes: number) => void
   hint?: string
+  /** Earliest selectable time as "HH:MM" (e.g. block backdating). */
+  min?: string
 }): JSX.Element {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-sm font-medium text-content">{label}</span>
       <input
         type="time"
+        min={min}
         value={toHHMM(value)}
         onChange={(e) => onChange(parseHHMM(e.target.value))}
         className="rounded-xl border border-border bg-surface-subtle px-3 py-2.5 text-content text-base

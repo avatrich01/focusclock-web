@@ -8,6 +8,7 @@ import { NotificationToast } from '@/components/NotificationToast'
 import { Login } from '@/features/auth/Login'
 import { ResetPassword } from '@/features/auth/ResetPassword'
 import { Onboarding } from '@/features/onboarding/Onboarding'
+import { StartDayModal } from '@/features/onboarding/StartDayModal'
 import { Dashboard } from '@/features/dashboard/Dashboard'
 import { WeeklyTodos } from '@/features/weekly/WeeklyTodos'
 import { Analytics } from '@/features/analytics/Analytics'
@@ -125,6 +126,7 @@ export default function Page(): JSX.Element {
             {route === 'reports' && <Reports />}
             {route === 'settings' && <SettingsPage />}
           </div>
+          <StartDayModal />
           <SummaryModal />
           <NotificationToast />
         </div>

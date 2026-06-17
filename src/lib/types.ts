@@ -12,6 +12,12 @@ export interface Settings {
   workEnd: MinutesOfDay
   lunchStart: MinutesOfDay
   lunchEnd: MinutesOfDay
+  dinnerStart: MinutesOfDay
+  dinnerEnd: MinutesOfDay
+  breakStart: MinutesOfDay
+  breakEnd: MinutesOfDay
+  /** The day (YYYY-MM-DD) the user started their workday; gates auto-counting. */
+  startDay: string
   clockFormat: ClockFormat
   theme: ThemePreference
   notificationsEnabled: boolean

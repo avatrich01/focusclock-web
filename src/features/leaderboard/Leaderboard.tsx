@@ -127,7 +127,10 @@ export function Leaderboard(): JSX.Element {
               )}
             </div>
           </div>
-          <p className="text-xs text-content-subtle mt-3">Points = focus hours ×10 + tasks ×5 + streak ×15. Focus resets weekly.</p>
+          <p className="text-xs text-content-subtle mt-3">
+            Points = task-hours ×20 + tasks ×5 + worked hours ×5 + streak ×15. Hours where you
+            actually completed a task count most. Resets weekly.
+          </p>
         </Card>
 
         {/* Peers: group management */}

@@ -30,6 +30,10 @@ export function Onboarding(): JSX.Element {
   const [workEnd, setWorkEnd] = useState(settings?.workEnd ?? 1020)
   const [lunchStart, setLunchStart] = useState(settings?.lunchStart ?? 720)
   const [lunchEnd, setLunchEnd] = useState(settings?.lunchEnd ?? 780)
+  const [dinnerStart, setDinnerStart] = useState(settings?.dinnerStart ?? 0)
+  const [dinnerEnd, setDinnerEnd] = useState(settings?.dinnerEnd ?? 0)
+  const [breakStart, setBreakStart] = useState(settings?.breakStart ?? 0)
+  const [breakEnd, setBreakEnd] = useState(settings?.breakEnd ?? 0)
   const [clockFormat, setClockFormat] = useState<ClockFormat>(settings?.clockFormat ?? '12h')
   const [theme, setTheme] = useState<ThemePreference>(settings?.theme ?? 'system')
   const [saving, setSaving] = useState(false)
@@ -47,7 +51,20 @@ export function Onboarding(): JSX.Element {
   async function finish(): Promise<void> {
     if (errors.length > 0) return
     setSaving(true)
-    await completeOnboarding({ userName: userName.trim(), linkUrl: linkUrl.trim(), workStart, workEnd, lunchStart, lunchEnd, clockFormat, theme })
+    await completeOnboarding({
+      userName: userName.trim(),
+      linkUrl: linkUrl.trim(),
+      workStart,
+      workEnd,
+      lunchStart,
+      lunchEnd,
+      dinnerStart,
+      dinnerEnd,
+      breakStart,
+      breakEnd,
+      clockFormat,
+      theme
+    })
     setSaving(false)
   }
 
@@ -89,6 +106,21 @@ export function Onboarding(): JSX.Element {
               <TimeField label="Lunch Start" value={lunchStart} onChange={setLunchStart} />
               <TimeField label="Lunch End" value={lunchEnd} onChange={setLunchEnd} />
             </div>
+
+            <details className="rounded-xl border border-border-subtle bg-surface-subtle/40 px-3 py-2">
+              <summary className="text-sm font-medium text-content cursor-pointer">
+                Add dinner / break <span className="text-content-subtle font-normal">(optional)</span>
+              </summary>
+              <div className="grid grid-cols-2 gap-4 mt-3">
+                <TimeField label="Dinner Start" value={dinnerStart} onChange={setDinnerStart} />
+                <TimeField label="Dinner End" value={dinnerEnd} onChange={setDinnerEnd} />
+                <TimeField label="Break Start" value={breakStart} onChange={setBreakStart} />
+                <TimeField label="Break End" value={breakEnd} onChange={setBreakEnd} />
+              </div>
+              <span className="text-xs text-content-subtle mt-2 block">
+                Leave a pair equal (e.g. both 00:00) to skip it. Breaks aren&apos;t counted as work.
+              </span>
+            </details>
 
             <div className="flex flex-wrap items-center gap-6 pt-1">
               <div className="flex flex-col gap-1.5">

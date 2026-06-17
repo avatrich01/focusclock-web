@@ -5,7 +5,7 @@ import { Card, cx } from '@/components/ui'
 import { Timeline } from '../timeline/Timeline'
 import { TodoList } from '../todos/TodoList'
 import { ClockIcon, FlameIcon, ListChecksIcon, TargetIcon } from '@/components/Icons'
-import { WEEKDAY_LONG, formatDuration, formatLongDate, formatTime, formatClock, minutesOfDay } from '@/lib/time'
+import { WEEKDAY_LONG, dayKey, formatDuration, formatLongDate, formatTime, formatClock, minutesOfDay } from '@/lib/time'
 import { isWorkingNow, totalWorkMinutes, workMinutesElapsed, workMinutesLeft } from '@/lib/schedule'
 import { greeting, vibeCheck } from '@/lib/vibe'
 
@@ -34,11 +34,12 @@ export function Dashboard(): JSX.Element {
   const clockFormat = settings?.clockFormat ?? '12h'
   const nowMin = minutesOfDay(now)
 
-  const elapsedMin = settings ? workMinutesElapsed(settings, nowMin) : 0
-  const leftMin = settings ? workMinutesLeft(settings, nowMin) : 0
+  const started = !!settings && settings.startDay === dayKey()
   const totalMin = settings ? totalWorkMinutes(settings) : 0
+  const elapsedMin = settings && started ? workMinutesElapsed(settings, nowMin) : 0
+  const leftMin = settings ? (started ? workMinutesLeft(settings, nowMin) : totalMin) : 0
   const progress = totalMin > 0 ? elapsedMin / totalMin : 0
-  const working = settings ? isWorkingNow(settings, nowMin) : false
+  const working = settings && started ? isWorkingNow(settings, nowMin) : false
 
   const tasksTotal = dailyTodos.length
   const tasksDone = dailyTodos.filter((t) => t.done).length

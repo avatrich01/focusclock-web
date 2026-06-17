@@ -92,7 +92,15 @@ export function SettingsPage(): JSX.Element {
             <TimeField label="Work End" value={settings.workEnd} onChange={(v) => save({ workEnd: v })} />
             <TimeField label="Lunch Start" value={settings.lunchStart} onChange={(v) => save({ lunchStart: v })} />
             <TimeField label="Lunch End" value={settings.lunchEnd} onChange={(v) => save({ lunchEnd: v })} />
+            <TimeField label="Dinner Start" value={settings.dinnerStart} onChange={(v) => save({ dinnerStart: v })} />
+            <TimeField label="Dinner End" value={settings.dinnerEnd} onChange={(v) => save({ dinnerEnd: v })} />
+            <TimeField label="Break Start" value={settings.breakStart} onChange={(v) => save({ breakStart: v })} />
+            <TimeField label="Break End" value={settings.breakEnd} onChange={(v) => save({ breakEnd: v })} />
           </div>
+          <p className="text-xs text-content-subtle -mt-2">
+            Dinner / break are optional — leave a pair equal (e.g. both 00:00) to skip. None of them
+            count as work. Your daily start time is set each morning and can&apos;t be backdated.
+          </p>
           <Row label="Clock format" hint="How times are displayed throughout the app">
             <SegmentedControl value={settings.clockFormat} onChange={(v) => save({ clockFormat: v })} options={[{ value: '12h', label: '12h' }, { value: '24h', label: '24h' }]} />
           </Row>

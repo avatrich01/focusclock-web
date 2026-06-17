@@ -5,7 +5,7 @@
  */
 import { supabase } from './supabaseClient'
 import { addDays, dayKey, isPreviousDay, minutesOfDay, startOfWeek } from './time'
-import { breakMinutesElapsed, workMinutesElapsed } from './schedule'
+import { breakLabelAt, breakMinutesElapsed, workMinutesElapsed } from './schedule'
 import type {
   ActivityReport,
   BlockKind,
@@ -44,6 +44,11 @@ const DEFAULT_SETTINGS = (): Omit<Settings, never> => ({
   workEnd: 1020,
   lunchStart: 720,
   lunchEnd: 780,
+  dinnerStart: 0,
+  dinnerEnd: 0,
+  breakStart: 0,
+  breakEnd: 0,
+  startDay: '',
   clockFormat: '12h',
   theme: 'system',
   notificationsEnabled: true,
@@ -68,6 +73,11 @@ function rowToSettings(r: any): Settings {
     workEnd: r.work_end,
     lunchStart: r.lunch_start,
     lunchEnd: r.lunch_end,
+    dinnerStart: r.dinner_start ?? 0,
+    dinnerEnd: r.dinner_end ?? 0,
+    breakStart: r.break_start ?? 0,
+    breakEnd: r.break_end ?? 0,
+    startDay: r.start_day ?? '',
     clockFormat: r.clock_format === '24h' ? '24h' : '12h',
     theme: ['dark', 'light', 'system'].includes(r.theme) ? r.theme : 'system',
     notificationsEnabled: !!r.notifications_enabled,
@@ -93,6 +103,11 @@ function settingsToRow(s: Settings): Record<string, unknown> {
     work_end: s.workEnd,
     lunch_start: s.lunchStart,
     lunch_end: s.lunchEnd,
+    dinner_start: s.dinnerStart,
+    dinner_end: s.dinnerEnd,
+    break_start: s.breakStart,
+    break_end: s.breakEnd,
+    start_day: s.startDay,
     clock_format: s.clockFormat,
     theme: s.theme,
     notifications_enabled: s.notificationsEnabled,
@@ -146,8 +161,8 @@ export function computeBlockPlan(
   let t = Math.floor(s.workStart / 60) * 60
   if (t < s.workStart) t = s.workStart
   for (let m = t; m <= s.workEnd; m += 60) {
-    const isLunch = m >= s.lunchStart && m < s.lunchEnd
-    blocks.push({ startMinutes: m, kind: isLunch ? 'lunch' : 'work', label: isLunch ? 'Lunch' : '' })
+    const label = breakLabelAt(s, m)
+    blocks.push({ startMinutes: m, kind: label ? 'lunch' : 'work', label })
   }
   return blocks
 }
@@ -381,11 +396,13 @@ const EMPTY_STAT = (day: string): DailyStat => ({
   goalMet: false
 })
 
-/** Effective "now" minutes for a day: full window for past days, 0 for future. */
+/** Effective "now" minutes for a day. Past days count full; today only counts
+ * once the user has started their day (start_day === today), else 0. */
 function effectiveMinutes(settings: Settings, day: string): number {
   const today = dayKey()
   if (day < today) return settings.workEnd
   if (day > today) return settings.workStart
+  if (settings.startDay !== today) return settings.workStart
   return minutesOfDay()
 }
 
@@ -785,8 +802,11 @@ export async function updateLeaderboardEntry(): Promise<void> {
   const tasksDone = (await completedTodosBetween(fromMs, Date.now())).length
   const focusMs = weekly.totalWorkedMs
   const streak = weekly.streak.current
-  // Simple game-y score: focus hours + tasks + streak all contribute.
-  const points = Math.round(focusMs / 3_600_000) * 10 + tasksDone * 5 + streak * 15
+  // Hours where you actually completed a task (utilised, breaks excluded) are
+  // weighted highest — clock time alone counts little.
+  const taskHours = weekly.days.reduce((sum, d) => sum + d.blocksCompleted, 0)
+  const points =
+    taskHours * 20 + tasksDone * 5 + Math.round(focusMs / 3_600_000) * 5 + streak * 15
   await supabase.from('leaderboard').upsert(
     {
       user_id: requireUid(),

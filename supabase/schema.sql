@@ -138,6 +138,13 @@ alter table public.leaderboard add column if not exists group_code text not null
 alter table public.leaderboard add column if not exists link_url text not null default '';
 create index if not exists idx_leaderboard_group on public.leaderboard (group_code);
 
+-- Daily start gate + dinner/break windows (safe to re-run).
+alter table public.settings add column if not exists start_day text not null default '';
+alter table public.settings add column if not exists dinner_start int not null default 0;
+alter table public.settings add column if not exists dinner_end int not null default 0;
+alter table public.settings add column if not exists break_start int not null default 0;
+alter table public.settings add column if not exists break_end int not null default 0;
+
 -- ─────────────────────────── Row Level Security ─────────────────────────────
 alter table public.settings enable row level security;
 alter table public.hourly_blocks enable row level security;
