@@ -54,7 +54,9 @@ const DEFAULT_SETTINGS = (): Omit<Settings, never> => ({
   idleAutoPause: true,
   idleThresholdMinutes: 5,
   notificationExtraSeconds: 10,
-  lockPastBlocks: false
+  lockPastBlocks: false,
+  groupCode: '',
+  linkUrl: ''
 })
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -76,7 +78,9 @@ function rowToSettings(r: any): Settings {
     idleAutoPause: !!r.idle_auto_pause,
     idleThresholdMinutes: r.idle_threshold_minutes ?? 5,
     notificationExtraSeconds: r.notification_extra_seconds ?? 10,
-    lockPastBlocks: !!r.lock_past_blocks
+    lockPastBlocks: !!r.lock_past_blocks,
+    groupCode: r.group_code ?? '',
+    linkUrl: r.link_url ?? ''
   }
 }
 
@@ -100,6 +104,8 @@ function settingsToRow(s: Settings): Record<string, unknown> {
     idle_threshold_minutes: s.idleThresholdMinutes,
     notification_extra_seconds: s.notificationExtraSeconds,
     lock_past_blocks: s.lockPastBlocks,
+    group_code: s.groupCode,
+    link_url: s.linkUrl,
     updated_at: new Date().toISOString()
   }
 }
@@ -789,25 +795,31 @@ export async function updateLeaderboardEntry(): Promise<void> {
       focus_ms: focusMs,
       tasks_done: tasksDone,
       streak,
+      group_code: settings.groupCode || '',
+      link_url: settings.linkUrl || '',
       updated_at: new Date().toISOString()
     },
     { onConflict: 'user_id' }
   )
 }
 
-export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
-  const { data } = await supabase
+export async function getLeaderboard(groupCode?: string): Promise<LeaderboardEntry[]> {
+  let q = supabase
     .from('leaderboard')
     .select('*')
     .order('points', { ascending: false })
     .order('focus_ms', { ascending: false })
-    .limit(100)
+    .limit(200)
+  if (groupCode) q = q.eq('group_code', groupCode)
+  const { data } = await q
   return (data ?? []).map((r: any) => ({
     userId: r.user_id,
     name: r.name,
     points: r.points,
     focusMs: r.focus_ms,
     tasksDone: r.tasks_done,
-    streak: r.streak
+    streak: r.streak,
+    groupCode: r.group_code ?? '',
+    linkUrl: r.link_url ?? ''
   }))
 }

@@ -23,6 +23,8 @@ export interface Settings {
   idleThresholdMinutes: number
   notificationExtraSeconds: number
   lockPastBlocks: boolean
+  groupCode: string
+  linkUrl: string
 }
 
 export type BlockStatus = 'pending' | 'completed' | 'missed' | 'current' | 'worked'
@@ -143,6 +145,8 @@ export interface LeaderboardEntry {
   focusMs: number
   tasksDone: number
   streak: number
+  groupCode: string
+  linkUrl: string
 }
 
 export interface DailySummaryPayload {

@@ -131,6 +131,13 @@ create policy "lb_read" on public.leaderboard for select to authenticated using 
 create policy "lb_write_insert" on public.leaderboard for insert to authenticated with check (auth.uid() = user_id);
 create policy "lb_write_update" on public.leaderboard for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- Peer groups + optional profile link (added later — safe to re-run).
+alter table public.settings add column if not exists group_code text not null default '';
+alter table public.settings add column if not exists link_url text not null default '';
+alter table public.leaderboard add column if not exists group_code text not null default '';
+alter table public.leaderboard add column if not exists link_url text not null default '';
+create index if not exists idx_leaderboard_group on public.leaderboard (group_code);
+
 -- ─────────────────────────── Row Level Security ─────────────────────────────
 alter table public.settings enable row level security;
 alter table public.hourly_blocks enable row level security;

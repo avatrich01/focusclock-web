@@ -25,6 +25,7 @@ export function Onboarding(): JSX.Element {
   const settings = useStore((s) => s.settings)
 
   const [userName, setUserName] = useState(settings?.userName ?? '')
+  const [linkUrl, setLinkUrl] = useState(settings?.linkUrl ?? '')
   const [workStart, setWorkStart] = useState(settings?.workStart ?? 480)
   const [workEnd, setWorkEnd] = useState(settings?.workEnd ?? 1020)
   const [lunchStart, setLunchStart] = useState(settings?.lunchStart ?? 720)
@@ -46,7 +47,7 @@ export function Onboarding(): JSX.Element {
   async function finish(): Promise<void> {
     if (errors.length > 0) return
     setSaving(true)
-    await completeOnboarding({ userName: userName.trim(), workStart, workEnd, lunchStart, lunchEnd, clockFormat, theme })
+    await completeOnboarding({ userName: userName.trim(), linkUrl: linkUrl.trim(), workStart, workEnd, lunchStart, lunchEnd, clockFormat, theme })
     setSaving(false)
   }
 
@@ -69,6 +70,17 @@ export function Onboarding(): JSX.Element {
               <span className="text-sm font-medium text-content">What should we call you?</span>
               <input value={userName} onChange={(e) => setUserName(e.target.value)} placeholder="Your name (optional)" maxLength={40} className="rounded-xl border border-border bg-surface-subtle px-3 py-2.5 text-content text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition" />
               <span className="text-xs text-content-subtle">We&apos;ll use it to gas you up throughout the day ✨</span>
+            </label>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-content">Profile link <span className="text-content-subtle font-normal">(optional)</span></span>
+              <input
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="LinkedIn, TikTok, or your site"
+                className="rounded-xl border border-border bg-surface-subtle px-3 py-2.5 text-content text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition"
+              />
+              <span className="text-xs text-content-subtle">Shown on the leaderboard so peers can find you.</span>
             </label>
 
             <div className="grid grid-cols-2 gap-4">

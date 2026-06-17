@@ -41,6 +41,19 @@ export default function Page(): JSX.Element {
 
   useScheduler()
 
+  // Accept a peer-group invite link: ?join=CODE
+  useEffect(() => {
+    if (!authed || !settings?.onboarded || typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('join')
+    if (!code) return
+    void useStore.getState().setGroupCode(code.toUpperCase())
+    useStore.getState().setRoute('leaderboard')
+    params.delete('join')
+    const qs = params.toString()
+    window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : '') + window.location.hash)
+  }, [authed, settings?.onboarded])
+
   useEffect(() => {
     void init()
     // Register the service worker so the app is installable as a PWA (and ready

@@ -60,6 +60,7 @@ interface StoreState {
 
   saveSettings: (patch: Partial<Settings>) => Promise<void>
   completeOnboarding: (patch: Partial<Settings>) => Promise<void>
+  setGroupCode: (code: string) => Promise<void>
 
   setBlockStatus: (id: number, status: BlockStatus) => Promise<void>
   setBlockNote: (id: number, note: string) => Promise<void>
@@ -178,6 +179,13 @@ export const useStore = create<StoreState>((set, get) => ({
     applyThemeClass(next, get().systemPrefersDark)
     const today = await db.buildTodaySnapshot()
     set({ settings: next, today })
+    void db.updateLeaderboardEntry().catch(() => {})
+  },
+
+  setGroupCode: async (code) => {
+    const next = await db.updateSettings({ groupCode: code })
+    set({ settings: next })
+    await db.updateLeaderboardEntry().catch(() => {})
   },
 
   setBlockStatus: async (id, status) => {

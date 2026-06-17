@@ -103,6 +103,11 @@ export function SettingsPage(): JSX.Element {
             <span className="text-sm font-medium text-content">Your name</span>
             <input value={settings.userName} onChange={(e) => save({ userName: e.target.value })} placeholder="What should we call you?" maxLength={40} className="rounded-xl border border-border bg-surface-subtle px-3 py-2.5 text-content text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition" />
           </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-content">Profile link <span className="text-content-subtle font-normal">(optional)</span></span>
+            <input value={settings.linkUrl} onChange={(e) => save({ linkUrl: e.target.value })} placeholder="LinkedIn, TikTok, or your site" className="rounded-xl border border-border bg-surface-subtle px-3 py-2.5 text-content text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30 transition" />
+            <span className="text-xs text-content-subtle">Shown on the leaderboard so peers can find you.</span>
+          </label>
           <Row label="Daily focus goal" hint="Hit this to keep your streak alive and earn the win 🔥">
             <div className="flex items-center gap-2">
               <input type="number" min={1} max={16} step={0.5} value={settings.dailyFocusGoal / 60} onChange={(e) => save({ dailyFocusGoal: Math.round(Number(e.target.value) * 60) })} className="w-20 rounded-xl border border-border bg-surface-subtle px-3 py-2 text-content text-sm tabular outline-none focus:border-accent" />
