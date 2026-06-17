@@ -7,9 +7,7 @@ import { playNotificationSound } from './sound'
 import type {
   BlockStatus,
   DailySummaryPayload,
-  MissedBlock,
   NotificationRecord,
-  RecoveryAction,
   Settings,
   Todo,
   TodaySnapshot,
@@ -46,8 +44,6 @@ interface StoreState {
   route: Route
   dailyTodos: Todo[]
   dailyBucket: string
-  missed: MissedBlock[]
-  showRecovery: boolean
   summary: DailySummaryPayload | null
   showSummary: boolean
   toast: ToastData | null
@@ -64,11 +60,6 @@ interface StoreState {
   saveSettings: (patch: Partial<Settings>) => Promise<void>
   completeOnboarding: (patch: Partial<Settings>) => Promise<void>
 
-  startWork: () => Promise<void>
-  pauseWork: () => Promise<void>
-  resumeWork: () => Promise<void>
-  stopWork: () => Promise<void>
-
   setBlockStatus: (id: number, status: BlockStatus) => Promise<void>
   setBlockNote: (id: number, note: string) => Promise<void>
 
@@ -80,9 +71,6 @@ interface StoreState {
   setDailyTodoReminder: (id: number, reminderMinutes: number | null) => Promise<void>
   deleteDailyTodo: (id: number) => Promise<void>
 
-  resolveMissed: (id: number, action: RecoveryAction) => Promise<void>
-  resolveAllMissed: (action: RecoveryAction) => Promise<void>
-  dismissRecovery: () => void
   dismissSummary: () => void
 
   pushToast: (t: Omit<ToastData, 'id'>) => void
@@ -106,8 +94,6 @@ export const useStore = create<StoreState>((set, get) => ({
   route: 'dashboard',
   dailyTodos: [],
   dailyBucket: dayKey(),
-  missed: [],
-  showRecovery: false,
   summary: null,
   showSummary: false,
   toast: null,
@@ -124,16 +110,14 @@ export const useStore = create<StoreState>((set, get) => ({
       return
     }
     db.setUserId(userId)
-    await db.reconcileDanglingSessions()
 
     const settings = await db.getSettings()
     if (settings.carryOverTodos) await db.carryOverIncompleteDailyTodos(dayKey())
 
     const bucket = dayKey()
-    const [today, weekly, missed, dailyTodos] = await Promise.all([
+    const [today, weekly, dailyTodos] = await Promise.all([
       db.buildTodaySnapshot(),
       db.computeWeekly(),
-      db.getMissedBlocks(),
       db.listTodos('daily', bucket)
     ])
 
@@ -144,10 +128,8 @@ export const useStore = create<StoreState>((set, get) => ({
       settings,
       today,
       weekly,
-      missed,
       dailyTodos,
-      dailyBucket: bucket,
-      showRecovery: settings.onboarded && missed.length > 0
+      dailyBucket: bucket
     })
 
     if (typeof window !== 'undefined') {
@@ -193,24 +175,6 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ settings: next, today })
   },
 
-  startWork: async () => {
-    await db.startWork()
-    await get().refreshToday()
-  },
-  pauseWork: async () => {
-    await db.pauseWork()
-    await get().refreshToday()
-  },
-  resumeWork: async () => {
-    await db.resumeWork()
-    await get().refreshToday()
-  },
-  stopWork: async () => {
-    await db.stopWork()
-    await get().refreshToday()
-    set({ weekly: await db.computeWeekly() })
-  },
-
   setBlockStatus: async (id, status) => {
     await db.setBlockStatus(id, status)
     await db.recomputeDailyStat(dayKey())
@@ -244,18 +208,6 @@ export const useStore = create<StoreState>((set, get) => ({
     set({ dailyTodos: await db.deleteTodo(id, 'daily', get().dailyBucket) })
   },
 
-  resolveMissed: async (id, action) => {
-    await db.resolveMissedBlock(id, action)
-    const remaining = get().missed.filter((m) => m.id !== id)
-    set({ missed: remaining, showRecovery: remaining.length > 0 })
-    await get().refreshToday()
-  },
-  resolveAllMissed: async (action) => {
-    for (const m of get().missed) await db.resolveMissedBlock(m.id, action)
-    set({ missed: [], showRecovery: false })
-    await get().refreshToday()
-  },
-  dismissRecovery: () => set({ showRecovery: false, missed: [] }),
   dismissSummary: () => set({ showSummary: false }),
 
   pushToast: (t) => set({ toast: { ...t, id: Date.now() } }),

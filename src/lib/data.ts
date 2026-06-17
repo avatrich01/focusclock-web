@@ -5,6 +5,7 @@
  */
 import { supabase } from './supabaseClient'
 import { addDays, dayKey, isPreviousDay, minutesOfDay, startOfWeek } from './time'
+import { breakMinutesElapsed, workMinutesElapsed } from './schedule'
 import type {
   ActivityReport,
   BlockKind,
@@ -374,21 +375,47 @@ const EMPTY_STAT = (day: string): DailyStat => ({
   goalMet: false
 })
 
+/** Effective "now" minutes for a day: full window for past days, 0 for future. */
+function effectiveMinutes(settings: Settings, day: string): number {
+  const today = dayKey()
+  if (day < today) return settings.workEnd
+  if (day > today) return settings.workStart
+  return minutesOfDay()
+}
+
+/**
+ * Auto-progress today's hour blocks based on the clock: once an hour has fully
+ * passed it becomes "done" (if it carried a task) or "worked" (a quiet dot).
+ */
+async function progressBlocks(day: string, settings: Settings): Promise<void> {
+  if (day !== dayKey()) return
+  const nowM = minutesOfDay()
+  const blocks = await getBlocksForDay(day)
+  for (const b of blocks) {
+    if (b.kind === 'work' && b.status === 'pending' && b.startMinutes + 60 <= nowM) {
+      await setBlockStatus(b.id, b.note.trim() ? 'completed' : 'worked')
+    }
+  }
+}
+
 export async function recomputeDailyStat(day: string, s?: Settings): Promise<DailyStat> {
   const settings = s ?? (await getSettings())
   await ensureBlocksForDay(day, settings)
+  await progressBlocks(day, settings)
   const blocks = await getBlocksForDay(day)
-  const focusMs = await sumForDay(day, 'focus_ms')
-  const pauseMs = await sumForDay(day, 'pause_ms')
+  // Hours auto-count from the schedule — no manual sessions.
+  const eff = effectiveMinutes(settings, day)
+  const focusMs = workMinutesElapsed(settings, eff) * 60000
+  const breakMs = breakMinutesElapsed(settings, eff) * 60000
   const work = blocks.filter((b) => b.kind === 'work')
   const completed = work.filter((b) => b.status === 'completed').length
   const planned = work.filter((b) => b.note.trim() !== '' || b.status === 'completed').length
   const goalMs = (settings.dailyFocusGoal || 60) * 60 * 1000
   const stat: DailyStat = {
     day,
-    workedMs: focusMs + pauseMs,
+    workedMs: focusMs,
     focusMs,
-    breakMs: pauseMs,
+    breakMs,
     blocksCompleted: completed,
     blocksTotal: planned,
     goalMet: focusMs >= goalMs
@@ -474,12 +501,6 @@ export async function computeWeekly(anchorDay: string = dayKey()): Promise<Weekl
 export async function buildTodaySnapshot(): Promise<TodaySnapshot> {
   const day = dayKey()
   const settings = await getSettings()
-  await ensureBlocksForDay(day, settings)
-  const active = await getActiveSession(day)
-  if (active) {
-    accrue(active, Date.now())
-    await saveSession(active)
-  }
   const stat = await recomputeDailyStat(day, settings)
   const blocks = await getBlocksForDay(day)
   const nowM = minutesOfDay()
@@ -490,9 +511,8 @@ export async function buildTodaySnapshot(): Promise<TodaySnapshot> {
       break
     }
   }
-  const session = (await getActiveSession(day)) ?? (await getLatestSession(day))
   const streak = await computeStreak()
-  return { day, blocks, session, stat, streak, currentBlockIndex }
+  return { day, blocks, session: null, stat, streak, currentBlockIndex }
 }
 
 export async function reconcileDanglingSessions(): Promise<void> {

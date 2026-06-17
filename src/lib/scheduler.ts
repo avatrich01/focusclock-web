@@ -1,8 +1,9 @@
 'use client'
 /**
- * Client-side heartbeat — the browser equivalent of the Electron scheduler.
- * Drives session accrual, real-work marking, idle auto-pause, hourly nudges,
- * to-do reminders, the end-of-day recap, carry-over and recovery.
+ * Lightweight client heartbeat. Hours auto-count from the schedule (no sessions
+ * to tick), so this only handles minute-boundary work: hourly nudges, to-do
+ * reminders, the end-of-day recap, carry-over, and an occasional snapshot
+ * refresh to keep blocks/stats current.
  */
 import { useEffect, useRef } from 'react'
 import { useStore } from './useStore'
@@ -20,19 +21,9 @@ function fmt(ms: number): string {
 export function useScheduler(): void {
   const busy = useRef(false)
   const lastMinuteKey = useRef('')
-  const lastActivity = useRef(Date.now())
-  const autoPaused = useRef(false)
-  const lastSnapshotAt = useRef(0)
+  const lastRefreshAt = useRef(0)
 
   useEffect(() => {
-    const bump = (): void => {
-      lastActivity.current = Date.now()
-    }
-    window.addEventListener('mousemove', bump)
-    window.addEventListener('keydown', bump)
-    window.addEventListener('mousedown', bump)
-    window.addEventListener('focus', bump)
-
     lastMinuteKey.current = `${dayKey()}:${minutesOfDay()}`
 
     const tick = async (): Promise<void> => {
@@ -40,11 +31,6 @@ export function useScheduler(): void {
       if (!store.authed || busy.current) return
       busy.current = true
       try {
-        const session = await db.tickActiveSession()
-        if (session?.state === 'running') await db.markCurrentBlockWorked()
-
-        await handleIdle(session?.state ?? null)
-
         const day = dayKey()
         const minutes = minutesOfDay()
         const key = `${day}:${minutes}`
@@ -53,10 +39,10 @@ export function useScheduler(): void {
           lastMinuteKey.current = key
           await onMinuteChanged(day, minutes, prevDay)
         }
-
+        // Periodic refresh keeps blocks + persisted stats current (snappy: 20s).
         const now = Date.now()
-        if (now - lastSnapshotAt.current >= 5000) {
-          lastSnapshotAt.current = now
+        if (now - lastRefreshAt.current >= 20000) {
+          lastRefreshAt.current = now
           await store.refreshToday()
         }
       } catch {
@@ -66,50 +52,25 @@ export function useScheduler(): void {
       }
     }
 
-    const handleIdle = async (state: string | null): Promise<void> => {
-      const s = useStore.getState().settings
-      if (!s?.idleAutoPause) return
-      const idleSeconds = (Date.now() - lastActivity.current) / 1000
-      const threshold = Math.max(1, s.idleThresholdMinutes) * 60
-      if (state === 'running' && idleSeconds >= threshold) {
-        await db.pauseWork()
-        autoPaused.current = true
-        await useStore.getState().notify('system', 'FocusClock', 'Paused — you stepped away ⏸️', {
-          emoji: '⏸️'
-        })
-        await useStore.getState().refreshToday()
-      } else if (autoPaused.current && state === 'paused' && idleSeconds < 5) {
-        await db.resumeWork()
-        autoPaused.current = false
-        await useStore.getState().refreshToday()
-      } else if (state !== 'paused') {
-        autoPaused.current = false
-      }
-    }
-
     const onMinuteChanged = async (day: string, minutes: number, prevDay: string): Promise<void> => {
       const store = useStore.getState()
       const s = store.settings
       if (!s) return
 
-      if (prevDay && prevDay !== day) {
-        if (s.carryOverTodos) await db.carryOverIncompleteDailyTodos(day)
-        const missed = await db.getMissedBlocks()
-        if (missed.length > 0) useStore.setState({ missed, showRecovery: true })
+      if (prevDay && prevDay !== day && s.carryOverTodos) {
+        await db.carryOverIncompleteDailyTodos(day)
       }
 
+      // Hourly nudge at the top of each work hour.
       const blocks = await db.getBlocksForDay(day)
       const starting = blocks.find((b) => b.startMinutes === minutes)
-
-      // Hourly nudge — quiet while paused.
-      const active = store.today?.session ?? null
-      if (starting && starting.kind === 'work' && active?.state !== 'paused') {
+      if (starting && starting.kind === 'work') {
         const clock = formatClock(starting.startMinutes, s.clockFormat)
-        const remaining = await db.countOpenDailyTodos(day)
+        const left = await db.countOpenDailyTodos(day)
         const body = starting.label
           ? `It's ${clock} — ${starting.label} time 🍽️`
-          : remaining > 0
-            ? `It's ${clock}. ${remaining} to-do${remaining === 1 ? '' : 's'} left — let's get it 🔥`
+          : left > 0
+            ? `It's ${clock}. ${left} task${left === 1 ? '' : 's'} left — let's get it 🔥`
             : `It's ${clock}. New hour, fresh focus ✨`
         await store.notify('hourly', 'FocusClock', body, { emoji: '⏱️' })
       }
@@ -120,7 +81,7 @@ export function useScheduler(): void {
         await store.notify('reminder', '⏰ Reminder', todo.text, { emoji: '⏰' })
       }
 
-      // End-of-day recap.
+      // End-of-day recap (once per day).
       if (minutes >= s.workEnd && !(await db.summaryFiredToday(day))) {
         const snapshot = await db.buildTodaySnapshot()
         const completedTasks = await db.completedDailyTodos(day)
@@ -130,7 +91,7 @@ export function useScheduler(): void {
         await store.notify(
           'summary',
           "That's a wrap 🎬",
-          `Focus ${fmt(snapshot.stat.focusMs)} · Worked ${fmt(snapshot.stat.workedMs)}${tail}`,
+          `Worked ${fmt(snapshot.stat.workedMs)}${tail}`,
           { emoji: '🎬' }
         )
         const payload: DailySummaryPayload = {
@@ -148,12 +109,6 @@ export function useScheduler(): void {
     }
 
     const id = setInterval(() => void tick(), 1000)
-    return () => {
-      clearInterval(id)
-      window.removeEventListener('mousemove', bump)
-      window.removeEventListener('keydown', bump)
-      window.removeEventListener('mousedown', bump)
-      window.removeEventListener('focus', bump)
-    }
+    return () => clearInterval(id)
   }, [])
 }

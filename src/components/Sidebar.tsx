@@ -1,6 +1,8 @@
 'use client'
 import type { ReactNode } from 'react'
 import { useStore, type Route } from '@/lib/useStore'
+import { isWorkingNow } from '@/lib/schedule'
+import { minutesOfDay } from '@/lib/time'
 import { cx } from './ui'
 import {
   BarChartIcon,
@@ -24,14 +26,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): JSX.Elemen
   const route = useStore((s) => s.route)
   const setRoute = useStore((s) => s.setRoute)
   const signOut = useStore((s) => s.signOut)
-  const session = useStore((s) => s.today?.session ?? null)
+  const settings = useStore((s) => s.settings)
 
-  const dotClass =
-    session?.state === 'running'
-      ? 'bg-success animate-pulse'
-      : session?.state === 'paused'
-        ? 'bg-warning'
-        : 'bg-content-subtle'
+  const working = settings ? isWorkingNow(settings, minutesOfDay()) : false
+  const dotClass = working ? 'bg-success animate-pulse' : 'bg-content-subtle'
 
   return (
     <aside className="w-60 h-full shrink-0 border-r border-border bg-surface-raised md:bg-surface-subtle/60 flex flex-col">
@@ -73,7 +71,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }): JSX.Elemen
         </button>
         <div className="px-2 flex items-center gap-2 text-xs text-content-subtle">
           <span className={cx('h-2 w-2 rounded-full', dotClass)} />
-          {session?.state === 'running' ? 'Working' : session?.state === 'paused' ? 'Paused' : 'Idle'}
+          {working ? 'Working hours' : 'Off hours'}
         </div>
       </div>
     </aside>

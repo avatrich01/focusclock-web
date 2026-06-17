@@ -13,7 +13,6 @@ import { WeeklyTodos } from '@/features/weekly/WeeklyTodos'
 import { Analytics } from '@/features/analytics/Analytics'
 import { Reports } from '@/features/reports/Reports'
 import { SettingsPage } from '@/features/settings/SettingsPage'
-import { RecoveryModal } from '@/features/recovery/RecoveryModal'
 import { SummaryModal } from '@/features/summary/SummaryModal'
 import { ClockIcon, MenuIcon } from '@/components/Icons'
 
@@ -111,7 +110,6 @@ export default function Page(): JSX.Element {
             {route === 'reports' && <Reports />}
             {route === 'settings' && <SettingsPage />}
           </div>
-          <RecoveryModal />
           <SummaryModal />
           <NotificationToast />
         </div>
