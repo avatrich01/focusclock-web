@@ -1,0 +1,90 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * FocusClock — "WAYBILL" palette (electric blue + neutral + semantic pops).
+ * RGB channels so Tailwind's <alpha-value> works.
+ */
+:root {
+  --surface: 249 247 242;
+  --surface-subtle: 241 239 232;
+  --surface-raised: 255 255 255;
+  --border: 226 222 213;
+  --border-subtle: 236 233 226;
+  --content: 18 22 42;
+  --content-muted: 90 96 118;
+  --content-subtle: 138 144 164;
+  --accent: 42 67 232;
+  --accent-soft: 219 226 252;
+  --highlight: 108 138 0;
+  --highlight-soft: 214 244 120;
+  --info: 52 96 224;
+  --info-soft: 220 233 252;
+  --success: 24 165 88;
+  --warning: 210 96 12;
+  --danger: 200 22 79;
+}
+
+.dark {
+  --surface: 9 13 36;
+  --surface-subtle: 15 20 50;
+  --surface-raised: 21 27 62;
+  --border: 40 50 92;
+  --border-subtle: 30 38 72;
+  --content: 234 238 250;
+  --content-muted: 160 170 200;
+  --content-subtle: 116 126 158;
+  --accent: 110 134 255;
+  --accent-soft: 28 40 92;
+  --highlight: 198 234 30;
+  --highlight-soft: 46 56 14;
+  --info: 124 154 255;
+  --info-soft: 24 36 78;
+  --success: 46 200 116;
+  --warning: 245 158 60;
+  --danger: 240 92 132;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: rgb(var(--surface));
+  color: rgb(var(--content));
+  font-family: var(--font-inter), 'Segoe UI', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-space-grotesk), var(--font-inter), system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+input,
+textarea {
+  font-family: inherit;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}

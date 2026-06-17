@@ -1,0 +1,16 @@
+{
+  "name": "FocusClock",
+  "short_name": "FocusClock",
+  "description": "Hourly work tracking & focus — stay locked in, every day.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0d24",
+  "theme_color": "#2A43E8",
+  "orientation": "any",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
